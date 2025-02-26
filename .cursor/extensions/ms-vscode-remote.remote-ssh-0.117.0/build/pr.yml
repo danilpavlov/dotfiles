@@ -1,0 +1,98 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+pr:
+    paths:
+        include:
+            - open-ssh-remote
+
+variables:
+  DOCKER_BUILDKIT: 1
+  DOCKER_CACHE_DIR: $(Pipeline.Workspace)/docker
+  BASELINE_LOG_PATH: $(Agent.TempDirectory)/baseline-logs
+
+steps:
+    - task: NodeTool@0
+      inputs:
+          versionSpec: '18.x'
+
+    # Add Docker caching
+    - task: Cache@2
+      displayName: Cache Docker images
+      inputs:
+        key: 'baseline-tests-docker-image-cache'
+        path: $(DOCKER_CACHE_DIR)
+        cacheHitVar: DOCKER_CACHE_RESTORED
+
+    # Load Docker cache if available
+    - script: |
+        mkdir -p $(DOCKER_CACHE_DIR)
+        docker images --all
+        if [ -f "$(DOCKER_CACHE_DIR)/cache.tar" ]; then
+          echo "Loading cached Docker images..."
+          docker load -i $(DOCKER_CACHE_DIR)/cache.tar
+        fi
+         docker images --all
+      displayName: Restore Docker cache
+      condition: and(succeeded(), eq(variables.DOCKER_CACHE_RESTORED, 'true'))
+
+    - task: AzureCLI@2
+      displayName: 'Azure CLI: Set token for packaging registry'
+      inputs:
+        azureSubscription: 'vscode-devdiv-packaging'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        workingDirectory: open-ssh-remote
+        inlineScript: |
+          set -e
+          TOKEN=$(az account get-access-token --query accessToken --resource 499b84ac-1321-427f-aa17-267ca6975798 -o tsv)
+          TOKEN_BASE64=$(echo -n "$TOKEN" | base64 | tr -d '\n')
+
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:username=devdiv"
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:email=unset"
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:_password=$TOKEN_BASE64"
+
+    - script: yarn install --frozen-lockfile
+      displayName: Install dependencies
+      workingDirectory: open-ssh-remote
+
+      # Install dev containers CLI
+    - script: |
+        npm install -g @devcontainers/cli
+      displayName: Install dev containers CLI
+
+    - script: yarn lint
+      displayName: yarn lint
+      workingDirectory: open-ssh-remote
+
+    - script: yarn compile
+      displayName: yarn compile
+      workingDirectory: open-ssh-remote
+
+    - script: xvfb-run -a yarn test
+      displayName: yarn test
+      workingDirectory: open-ssh-remote
+
+    - script: xvfb-run -a yarn baseline
+      displayName: yarn baseline
+      workingDirectory: open-ssh-remote
+      env:
+        BASELINE_LOG_PATH: $(BASELINE_LOG_PATH)
+
+    # Save Docker images to cache - always update the cache
+    - script: |
+        docker images --all
+        echo "Saving Docker images to cache..."
+        mkdir -p $(DOCKER_CACHE_DIR)
+        # Get all baseline test container images and save them
+        docker images "vsc-*" --format "{{.Repository}}:{{.Tag}}" | tr '\n' ' ' | xargs docker save -o $(DOCKER_CACHE_DIR)/cache.tar
+        ls -la $(DOCKER_CACHE_DIR)
+      displayName: Save docker cache for subsequent runs
+      condition: succeeded()  # Only check if previous steps succeeded
+
+    # Publish baseline logs as artifacts
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Baseline Logs'
+      inputs:
+        targetPath: $(BASELINE_LOG_PATH)
+        artifact: 'baseline-logs'
+      condition: always()  # Publish logs even if tests fail

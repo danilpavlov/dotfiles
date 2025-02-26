@@ -1,0 +1,36 @@
+{
+  "name": "@early/cli",
+  "version": "0.0.4",
+  "private": true,
+  "main": "src/index.ts",
+  "bin": {
+    "early-ai": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "rimraf dist && node scripts/build.js",
+    "watch": "rimraf dist && node scripts/watch.js",
+    "start": "node ./dist/index.js",
+    "check:lint": "eslint --ext .ts src",
+    "check:ts": "node scripts/type-check.js",
+    "check:prettier": "prettier --check \"src/**/*.ts\"",
+    "fix:prettier": "prettier --write \"src/**/*.ts\"",
+    "fix:lint": "npm run check:lint -- --fix",
+    "fix": "npm run fix:lint && npm run fix:prettier"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@achrinza/node-ipc": "^10.1.11",
+    "async-mutex": "^0.5.0",
+    "commander": "^12.1.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@commander-js/extra-typings": "^12.1.0",
+    "@types/achrinza__node-ipc": "npm:@types/node-ipc",
+    "@types/node": "^20.14.10",
+    "@types/node-ipc": "^9.2.3",
+    "typescript": "^5.5.3"
+  }
+}

@@ -1,0 +1,369 @@
+{
+	"name": "EarlyAI",
+	"displayName": "EarlyAI (by Early)",
+	"icon": "media/Early_Icon_Black.png",
+	"description": "The EarlyAI extension for Visual Studio Code generates and maintains validated unit tests, enhancing code quality and coverage. Supports JavaScript, TypeScript, Node.js, React, Angular, Jest, and Mocha.",
+	"publisher": "Early-AI",
+	"version": "0.5.23",
+	"repository": {
+		"url": "https://github.com/earlyai/earlyai-vscode-release"
+	},
+	"engines": {
+		"vscode": "^1.93.0",
+		"node": "<21.0.0"
+	},
+	"categories": [
+		"Programming Languages",
+		"Testing",
+		"Machine Learning",
+		"Snippets"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./dist/extension.js",
+	"scripts": {
+		"build": "npm run build --workspaces && npm run build:python && npm run build:self",
+		"build:no-python": "npm run build --workspaces && npm run build:self",
+		"build:self": "rimraf dist && node scripts/build.js",
+		"build:python:unix": "cd python-server && chmod +x ./build.sh && ./build.sh $npm_config_name && cd ..",
+		"build:python:win": "cd python-server && .\\build.bat && cd ..",
+		"build:python": "npm run build:python:unix || npm run build:python:win",
+		"clear-deps": "rimraf -g node_modules packages/*/node_modules",
+		"check:lint": "npm run check:lint --workspaces && npm run check:lint:self",
+		"check:lint:self": "eslint src/**",
+		"check:ts": "npm run check:ts --workspaces && npm run check:ts:self",
+		"check:ts:self": "tsc --noEmit",
+		"check:prettier": "npm run check:prettier --workspaces && npm run check:prettier:self",
+		"check:prettier:self": "prettier --check \"src/**/*.{ts,tsx}\"",
+		"fix:lint:self": "npm run check:lint:self -- --fix",
+		"fix:prettier": "prettier --write \"**/*.{ts,tsx,json,html,css}\"",
+		"fix:prettier:self": "prettier --write \"src/**/*.{ts,tsx,json,html,css}\"",
+		"fix": "npm run fix --workspaces && npm run fix:lint:self && npm run fix:prettier:self",
+		"postinstall": "patch-package",
+		"vscode:pack": "vsce package",
+		"vscode:prepublish": "npm run build:no-python",
+		"prestart:dev": "npm run build:python",
+		"start:dev": "concurrently \"npm run watch:*\"",
+		"start:python": "cd ./python-server && FLASK_ENV=development python3 ./main.py",
+		"watch:extension": "rimraf dist && node scripts/watch.js",
+		"watch:webview": "npm run watch --workspace @early/webview-ui",
+		"watch:cli": "npm run watch --workspace @early/cli",
+		"watch:onboarding-panel": "npm run watch --workspace @early/onboarding-panel",
+		"watch:earl-panel": "npm run watch --workspace @early/earl-panel",
+		"test": "jest",
+		"pretest:integration": "tsc",
+		"test:integration": "node ./dist/integration-tests/run-test.js",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@jest/types": "^29.6.3",
+		"@sprout2000/esbuild-copy-plugin": "^1.1.16",
+		"@total-typescript/ts-reset": "^0.5.1",
+		"@types/achrinza__node-ipc": "npm:@types/node-ipc",
+		"@types/eventsource": "^1.1.15",
+		"@types/findup-sync": "^4.0.5",
+		"@types/glob": "^8.1.0",
+		"@types/jest": "^29.5.10",
+		"@types/lodash.debounce": "^4.0.9",
+		"@types/lodash.uniqwith": "^4.5.9",
+		"@types/lodash.unset": "^4.5.9",
+		"@types/micromatch": "^4.0.9",
+		"@types/mocha": "^10.0.8",
+		"@types/node": "^20",
+		"@types/node-ipc": "^9.2.3",
+		"@types/vscode": "^1.88.0",
+		"@types/xmldom": "^0.1.34",
+		"@typescript-eslint/eslint-plugin": "6.12",
+		"@typescript-eslint/parser": "^6.9.1",
+		"@vscode/test-electron": "^2.4.1",
+		"@vscode/vsce": "^3.2.1",
+		"concurrently": "^8.2.2",
+		"esbuild": "0.20.1",
+		"eslint": "^8.54.0",
+		"eslint-config-prettier": "^9.0.0",
+		"eslint-plugin-import": "^2.29.0",
+		"eslint-plugin-local-rules": "^3.0.2",
+		"eslint-plugin-prettier": "^5.0.1",
+		"eslint-plugin-simple-import-sort": "^10.0.0",
+		"eslint-plugin-sonarjs": "^0.23.0",
+		"eslint-plugin-unicorn": "^49.0.0",
+		"husky": "^9.0.11",
+		"jest": "^29.7.0",
+		"knip": "^5.8.0",
+		"lint-staged": "^15.2.2",
+		"prettier": "^3.0.3",
+		"rimraf": "^6.0.1",
+		"ts-jest": "^29.1.1",
+		"ts-mocha": "^10.0.0",
+		"ts-node": "^10.9.2",
+		"tsc-alias": "^1.8.8",
+		"tsconfig-paths": "^4.2.0",
+		"typescript": "^5.6.3",
+		"vscode-test": "^1.5.0",
+		"zod": "^3.23.8"
+	},
+	"dependencies": {
+		"@achrinza/node-ipc": "^10.1.11",
+		"@azure/monitor-opentelemetry": "^1.4.0",
+		"@jest/test-result": "^29.7.0",
+		"@opentelemetry/api-logs": "^0.51.0",
+		"@opentelemetry/sdk-logs": "^0.51.0",
+		"@vscode/extension-telemetry": "^0.9.3",
+		"axios": "^1.6.0",
+		"deepmerge": "^4.3.1",
+		"eventsource": "^2.0.2",
+		"fast-glob": "^3.3.2",
+		"findup-sync": "^2.0.0",
+		"firebase": "10.8.1",
+		"import-fresh": "^3.3.1",
+		"jwt-decode": "^4.0.0",
+		"lodash.debounce": "^4.0.8",
+		"lodash.uniqwith": "^4.5.0",
+		"lodash.unset": "^4.5.2",
+		"micromatch": "^4.0.7",
+		"p-queue-compat": "^1.0.225",
+		"patch-package": "^8.0.0",
+		"postcss": "^8.5.1",
+		"postcss-scss": "^4.0.9",
+		"rxjs": "^7.8.0",
+		"ts-morph": "^24.0.0",
+		"upath": "^2.0.1",
+		"xmldom": "^0.6.0"
+	},
+	"workspaces": [
+		"packages/webview-ui",
+		"packages/cli",
+		"packages/onboarding-panel",
+		"packages/ui-common-configs",
+		"packages/earl-panel"
+	],
+	"contributes": {
+		"configuration": {
+			"title": "Early AI",
+			"properties": {
+				"early.coverageFileNames": {
+					"type": "array",
+					"default": [
+						"lcov.info",
+						"cov.xml",
+						"clover.xml DISABLED because we @cvrg-report/clover-json is buggy; it returns file name instead of file path + it doesnt get all files",
+						"coverage.xml",
+						"jacoco.xml"
+					],
+					"description": "coverage file names to look for",
+					"scope": "resource",
+					"order": 1
+				},
+				"early.coverageFilePaths": {
+					"type": "array",
+					"default": [
+						".early.coverage"
+					],
+					"description": "coverage file paths to search in",
+					"scope": "resource",
+					"order": 1
+				},
+				"early.coverageFilePathsForExternalTrigger": {
+					"type": "array",
+					"default": [
+						"coverage"
+					],
+					"description": "coverage file paths to search in for an external trigger",
+					"scope": "resource",
+					"order": 1
+				},
+				"early.ignoredPathGlobs": {
+					"type": "string",
+					"default": "**/{node_modules,venv,.venv,vendor}/**",
+					"scope": "resource",
+					"order": 1
+				},
+				"early.lowCoverageThreshold": {
+					"type": "number",
+					"default": 50,
+					"description": "coverage threshold considered too low",
+					"scope": "resource",
+					"order": 1
+				},
+				"early.sufficientCoverageThreshold": {
+					"type": "number",
+					"default": 70,
+					"description": "coverage threshold considered sufficient",
+					"scope": "resource",
+					"order": 1
+				}
+			}
+		},
+		"commands": [
+			{
+				"title": "Update Early Extension",
+				"command": "early.updateExtension",
+				"category": "Early AI"
+			},
+			{
+				"title": "Log Out",
+				"command": "early.logOut",
+				"category": "Early AI"
+			},
+			{
+				"title": "Refresh Coverage",
+				"command": "early.generateCoverage",
+				"icon": "$(refresh)",
+				"category": "Early AI"
+			},
+			{
+				"title": "Early AI: Go to Tests",
+				"command": "early.goToTests.contextMenu",
+				"category": "Early AI"
+			},
+			{
+				"title": "Early AI: Generate Tests",
+				"command": "early.generateTest.contextMenu",
+				"category": "Early AI"
+			},
+			{
+				"title": "Refresh tree state",
+				"command": "early.refreshTreeState",
+				"category": "Early AI"
+			},
+			{
+				"title": "Dump coverage per method",
+				"command": "early.dumpEarlyCoveragePerMethod",
+				"category": "Early AI"
+			},
+			{
+				"title": "Show Onboarding",
+				"command": "early.showOnboarding",
+				"category": "Early AI"
+			},
+			{
+				"title": "Install CLI",
+				"command": "early.installCLI",
+				"category": "Early AI"
+			},
+			{
+				"title": "Open Onboarding Page",
+				"command": "early.openOnboardingPage",
+				"category": "Early AI"
+			},
+			{
+				"title": "Open Earl Panel",
+				"command": "early.openEarlPanel",
+				"category": "Early AI"
+			},
+			{
+				"title": "Show Last Prompt",
+				"command": "early.showLastPrompt",
+				"category": "Early AI"
+			},
+			{
+				"title": "Answer Prompt",
+				"command": "early.answerPrompt",
+				"category": "Early AI"
+			},
+			{
+				"title": "Turn On Skip Red Tests",
+				"command": "early.turnOnSkipRedTests",
+				"category": "Early AI"
+			},
+			{
+				"title": "Turn Off Skip Red Tests",
+				"command": "early.turnOffSkipRedTests",
+				"category": "Early AI"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "early.generateTest.contextMenu",
+					"group": "early",
+					"when": "!(resourceFilename =~ /.early.(spec|test)./) && resourceFilename =~ /.(js|ts)(x)?$/"
+				},
+				{
+					"command": "early.goToTests.contextMenu",
+					"group": "early",
+					"when": "!(resourceFilename =~ /.early.(spec|test)./) && resourceFilename =~ /.(js|ts)(x)?$/"
+				}
+			],
+			"editor/title": [
+				{
+					"command": "early.answerPrompt",
+					"group": "navigation",
+					"when": "early.lastPromptIsAvailable && resourceExtname == .prompt"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "early.goToTests.contextMenu",
+					"when": "false"
+				},
+				{
+					"command": "early.generateTest.contextMenu",
+					"when": "false"
+				},
+				{
+					"command": "early.openEarlPanel",
+					"when": "false"
+				},
+				{
+					"command": "early.showLastPrompt",
+					"when": "early.lastPromptIsAvailable"
+				},
+				{
+					"command": "early.answerPrompt",
+					"when": "early.lastPromptIsAvailable && resourceExtname == .prompt"
+				},
+				{
+					"command": "early.turnOnSkipRedTests",
+					"when": "early.skipRedTestsAvailable"
+				},
+				{
+					"command": "early.turnOffSkipRedTests",
+					"when": "early.skipRedTestsAvailable"
+				}
+			]
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "early-explorer",
+					"title": "Early",
+					"icon": "media/Early_Icon_Black_square_format.svg"
+				}
+			]
+		},
+		"views": {
+			"early-explorer": [
+				{
+					"id": "early.code-explorer",
+					"name": "",
+					"type": "webview"
+				}
+			]
+		}
+	},
+	"firebaseConfig": {
+		"apiKey": "AIzaSyBvm4AkJlWDbrqBjOUzRY2LTpd2xcYIQ-s",
+		"authDomain": "early-ai.firebaseapp.com",
+		"projectId": "early-ai",
+		"storageBucket": "early-ai.appspot.com",
+		"messagingSenderId": "498452296588",
+		"appId": "1:498452296588:web:70f5c4a7c6db0ee145dca9",
+		"measurementId": "G-N97LKV7DN0"
+	},
+	"__metadata": {
+		"id": "83af3d2e-a2c5-4d0c-8a78-8a896a5a96bc",
+		"publisherId": "8d469312-d1f5-47c7-96a0-cfee9a6606cf",
+		"publisherDisplayName": "EarlyAI",
+		"targetPlatform": "undefined",
+		"isApplicationScoped": false,
+		"isPreReleaseVersion": false,
+		"hasPreReleaseVersion": false,
+		"installedTimestamp": 1739985698191,
+		"pinned": false,
+		"preRelease": false,
+		"source": "gallery",
+		"size": 67800973
+	}
+}

@@ -1,0 +1,43 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+pr:
+    paths:
+        include:
+            - open-ssh-remote
+
+steps:
+    - task: NodeTool@0
+      inputs:
+          versionSpec: '18.x'
+
+    - task: AzureCLI@2
+      displayName: 'Azure CLI: Set token for packaging registry'
+      inputs:
+        azureSubscription: 'vscode-devdiv-packaging'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        workingDirectory: open-ssh-remote
+        inlineScript: |
+          set -e
+          TOKEN=$(az account get-access-token --query accessToken --resource 499b84ac-1321-427f-aa17-267ca6975798 -o tsv)
+          TOKEN_BASE64=$(echo -n "$TOKEN" | base64 | tr -d '\n')
+
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:username=devdiv"
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:email=unset"
+          npm set "//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/vscode-internal/npm/:_password=$TOKEN_BASE64"
+
+    - script: yarn install --frozen-lockfile
+      displayName: Install dependencies
+      workingDirectory: open-ssh-remote
+
+    - script: yarn lint
+      displayName: yarn lint
+      workingDirectory: open-ssh-remote
+
+    - script: yarn compile
+      displayName: yarn compile
+      workingDirectory: open-ssh-remote
+
+    - script: xvfb-run -a yarn test
+      displayName: yarn test
+      workingDirectory: open-ssh-remote

@@ -1,0 +1,111 @@
+{
+	"MATCH": {
+		"prefix": "match",
+		"body": [
+			"MATCH (${1:n}:${2:Label})"
+		],
+		"description": "Match a Node with a label"
+	},
+	"MERGE": {
+		"prefix": "merge",
+		"body": [
+			"MERGE (${1:n}:${2:Label} { ${3:id}: ${4:\\$${3}} })",
+			"${5:SET ${1}.${6:prop} = $${6}}"
+		],
+		"description": "Match a Node with a label"
+	},
+	"CREATE node": {
+		"prefix": "createnode",
+		"body": [
+			"CREATE (${1:n}:${2:Label} { ${3:id}: ${4:\\$${3}} })",
+			""
+		],
+		"description": "Create a Node with a label"
+	},
+	"CREATE relationship": {
+		"prefix": "createrelationship",
+		"body": [
+			"CREATE (${1:n})-[${2:r}:${3:TYPE}${4: {${5:key: \\$value}\\}}]->(${6:m})",
+			""
+		],
+		"description": "Create a relationship between two nodes"
+	},
+	"Node": {
+		"prefix": "node",
+		"body": [
+			"(${1:n}:${2:Label})"
+		],
+		"description": "Add a node to a pattern"
+	},
+	"Outgoing Relationship": {
+		"prefix": "out",
+		"body": [
+			"-[${1:r}:${2:TYPE}]->"
+		],
+		"description": "Add an outgoing relationship to a pattern"
+	},
+	"Incoming Relationship": {
+		"prefix": "in",
+		"body": [
+			"<-[${1:r}:${2:TYPE}]-"
+		],
+		"description": "Add an incoming relationship to a pattern"
+	},
+	"WITH": {
+		"prefix": "with",
+		"body": [
+			"WITH ${1:*}",
+			""
+		],
+		"description": "Add flow control step using WITH"
+	},
+	"CASE": {
+		"prefix": "case",
+		"body": "CASE WHEN ${1:true} THEN ${2:[1]} ELSE ${3:[]} END"
+	},
+	"FOREACH": {
+		"prefix": "foreach",
+		"body": "FOREACH ( ${1:id} IN ${2:[1,2,3]} | ${3:MERGE (p:Person {id: ${1}\\}} )"
+	},
+	"UNWIND": {
+		"prefix": "unwind",
+		"body": [
+			"UNWIND ${1:$data} AS ${2:row}",
+			""
+		],
+		"description": "Unwind a list of values"
+	},
+	"Return": {
+		"prefix": "return",
+		"body": [
+			"RETURN ${1:*}",
+			""
+		],
+		"description": "Return something"
+	},
+	"Delete": {
+		"prefix": "delete",
+		"body": [
+			"DELETE ${1:n}",
+			""
+		],
+		"description": "Delete something"
+	},
+	"Set": {
+		"prefix": "set",
+		"body": [
+			"SET ${1:n}.${2:key} = ${3:$$value}"
+		],
+		"description": "Set a property"
+	},
+	"Create Constraint": {
+		"prefix": "createuniqueconstraint",
+		"body": "CREATE CONSTRAINT${1: IF NOT EXISTS} FOR (${2:n}:${3:Label}) REQUIRE (${2}.${4:id}) IS UNIQUE;\n",
+		"description": "Create a constraint"
+	},
+	"Create Node Key": {
+		"prefix": "createnodekeyconstraint",
+		"body": "CREATE CONSTRAINT ${1:IF NOT EXISTS} FOR (${2:n}:${3:Label}) REQUIRE (${2}.${4:id}, ${2}.${5:id}) IS NODE KEY;\n",
+		"description": "Create a constraint"
+	}
+}

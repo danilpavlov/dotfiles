@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkhistory_sidebar=self.webpackChunkhistory_sidebar||[]).push([[1867,7560,2389,3228],{7560:(r,t,e)=>{function s(){return s=Object.assign?Object.assign.bind():function(r){for(var t=1;t<arguments.length;t++){var e=arguments[t];for(var s in e)Object.prototype.hasOwnProperty.call(e,s)&&(r[s]=e[s])}return r},s.apply(this,arguments)}e.d(t,{Z:()=>s})}}]);
+//# sourceMappingURL=1867.c54d7bc824636f42.js.map

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>zeshuaro/renovate-configs",
+    "github>zeshuaro/renovate-configs:app",
+    "github>zeshuaro/renovate-configs:javascript"
+  ],
+  "packageRules": [
+    {
+      "groupName": "VS Code dependencies",
+      "matchFileNames": [
+        "package.json"
+      ],
+      "matchDepNames": [
+        "vscode",
+        "@types/vscode"
+      ],
+      "patch": {
+        "enabled": false
+      },
+      "rangeStrategy": "bump",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "vscode"
+    }
+  ]
+}
