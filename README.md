@@ -6,10 +6,12 @@
 
 ## Useful nvim keybindnings:
 
-- gd -- go definition
+- gd -- go definition (normal)
 
-- gr -- go reference
+- gr -- go reference (normal)
 
-- <space><space> -- fzf (telescope / find file through file system)
+- gc -- comment lines (visual)
 
-- <space> / -- fzf (find pattern through file system)
+- <space><space> -- fzf (telescope / find file through file system. normal)
+
+- <space> / -- fzf (find pattern through file system. normal)
