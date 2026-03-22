@@ -1,68 +1,45 @@
 return {
-  { "nvim-treesitter/playground", cmd = "TSPlaygroundToggle" },
-
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = {
-      ensure_installed = {
-        "astro",
-        "cmake",
-        "cpp",
-        "css",
-        "fish",
-        "gitignore",
-        "go",
-        "graphql",
-        "http",
-        "java",
-        "php",
-        "rust",
-        "scss",
-        "sql",
-        "svelte",
-        "latex",
-      },
-
-      -- matchup = {
-      -- 	enable = true,
-      -- },
-
-      -- https://github.com/nvim-treesitter/playground#query-linter
-      query_linter = {
-        enable = true,
-        use_virtual_text = true,
-        lint_events = { "BufWrite", "CursorHold" },
-      },
-
-      playground = {
-        enable = true,
-        disable = {},
-        updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
-        persist_queries = true, -- Whether the query persists across vim sessions
-        keybindings = {
-          toggle_query_editor = "o",
-          toggle_hl_groups = "i",
-          toggle_injected_languages = "t",
-          toggle_anonymous_nodes = "a",
-          toggle_language_display = "I",
-          focus_language = "f",
-          unfocus_language = "F",
-          update = "R",
-          goto_node = "<cr>",
-          show_help = "?",
-        },
-      },
+  "nvim-treesitter/nvim-treesitter",
+  build = ":TSUpdate",
+  main = "nvim-treesitter.configs",
+  opts = {
+    ensure_installed = {
+      "vimdoc",
+      "javascript",
+      "typescript",
+      "c",
+      "lua",
+      "rust",
+      "jsdoc",
+      "bash",
+      "typst",
+      "svelte",
+      "python",
+      "glsl",
     },
-    config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
-
-      -- MDX
-      vim.filetype.add({
-        extension = {
-          mdx = "mdx",
-        },
-      })
-      vim.treesitter.language.register("markdown", "mdx")
-    end,
+    sync_install = false,
+    auto_install = true,
+    indent = {
+      enable = true,
+    },
+    highlight = {
+      enable = true,
+      disable = function(lang, buf)
+        if lang == "html" then
+          print("disabled treesitter for html")
+          return true
+        end
+        local max_filesize = 100 * 1024 -- 100 KB
+        local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+        if ok and stats and stats.size > max_filesize then
+          vim.notify(
+            "File larger than 100KB treesitter disabled for performance",
+            vim.log.levels.WARN,
+            { title = "Treesitter" }
+          )
+          return true
+        end
+      end,
+    },
   },
 }

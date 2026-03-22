@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew install:*)",
+      "Bash(npm install:*)",
+      "Bash(tree-sitter:*)",
+      "Bash(mmdc:*)",
+      "Bash(luarocks:*)",
+      "Bash(head:*)",
+      "Bash(/opt/homebrew/bin/luarocks:*)",
+      "Bash(echo:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:dotfyle.com)"
+    ]
+  }
+}
