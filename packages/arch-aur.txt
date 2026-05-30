@@ -1,0 +1,6 @@
+# AUR packages (installed via paru). One per line.
+
+ghostty
+cbonsai
+pyenv-virtualenv
+asdf-vm

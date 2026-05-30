@@ -1,1 +1,12 @@
 .qodo
+
+# OS junk
+.DS_Store
+
+# Editor/runtime caches & logs
+*.log
+*.tmp.*
+__pycache__/
+
+# Per-machine secrets (real file is local, example is in repo)
+dot_config/zsh/work.zsh

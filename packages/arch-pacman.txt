@@ -1,0 +1,19 @@
+# Arch packages from the official repos. One per line. Comments and blanks OK.
+
+base-devel
+git
+zsh
+neovim
+tmux
+fzf
+fd
+bat
+eza
+btop
+htop
+ripgrep
+thefuck
+pyenv
+k9s
+zsh-autosuggestions
+zsh-syntax-highlighting

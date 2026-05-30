@@ -1,0 +1,26 @@
+# Copy this file to ~/.config/zsh/work.zsh and fill in the values you need.
+# The example is committed to the dotfiles repo; the real work.zsh is gitignored.
+# Variables below are sourced from ~/.zshrc when the file exists.
+
+# --- LLM / OpenAI-compatible endpoints --------------------------------------
+# export OPENAI_BASE_URL=
+# export ALFAGEN_OPENAI_API_KEY=
+# export ALFAGEN_OPENAI_API_KEY_GPT_OSS=
+# export ALFAGEN_OPENAI_API_KEY_QWEN3_CODER=
+# export ALFAGEN_OPENAI_API_KEY_QWEN3=
+
+# --- Kubernetes -------------------------------------------------------------
+# export KUBECONFIG="$HOME/kuber/new-test-kubeconfig"
+
+# --- Corporate proxy (set all three when needed) ----------------------------
+# export proxy=
+# export HTTP_PROXY="$proxy"
+# export HTTPS_PROXY="$proxy"
+
+# --- Jira -------------------------------------------------------------------
+# export JIRA_USERNAME=
+# export JIRA_PASSWORD=
+
+# --- Work-specific aliases --------------------------------------------------
+# alias ckp="${HOME}/scripts/redis_ckp.sh"
+# alias gowork="${HOME}/Downloads/work/platform"
