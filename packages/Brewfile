@@ -1,0 +1,19 @@
+# Curated Brewfile — only what dotfiles depend on. Other tools belong elsewhere.
+
+brew "asdf"
+brew "bat"
+brew "btop"
+brew "cbonsai"
+brew "eza"
+brew "fd"
+brew "fzf"
+brew "htop"
+brew "k9s"
+brew "neovim"
+brew "pyenv"
+brew "pyenv-virtualenv"
+brew "ripgrep"
+brew "thefuck"
+brew "tmux"
+
+cask "ghostty"
