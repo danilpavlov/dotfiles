@@ -1,0 +1,9 @@
+README.md
+LICENSE
+assets/
+packages/
+docs/
+
+{{ if ne .chezmoi.os "linux" -}}
+.config/hypr
+{{- end }}
