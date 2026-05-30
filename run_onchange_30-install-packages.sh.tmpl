@@ -1,0 +1,32 @@
+#!/bin/sh
+# packages hash: {{ include "packages/Brewfile" | sha256sum }} {{ include "packages/arch-pacman.txt" | sha256sum }} {{ include "packages/arch-aur.txt" | sha256sum }}
+set -eu
+
+{{ if eq .chezmoi.os "darwin" -}}
+if ! command -v brew >/dev/null 2>&1; then
+  echo "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+brew bundle --file="{{ .chezmoi.sourceDir }}/packages/Brewfile"
+
+{{- else if eq .chezmoi.os "linux" -}}
+if [ -r /etc/arch-release ]; then
+  PACMAN_LIST="{{ .chezmoi.sourceDir }}/packages/arch-pacman.txt"
+  AUR_LIST="{{ .chezmoi.sourceDir }}/packages/arch-aur.txt"
+
+  sudo pacman -Syu --needed --noconfirm $(grep -Ev '^(#|$)' "$PACMAN_LIST")
+
+  if ! command -v paru >/dev/null 2>&1; then
+    sudo pacman -S --needed --noconfirm base-devel git
+    TMPDIR=$(mktemp -d)
+    git clone https://aur.archlinux.org/paru.git "$TMPDIR/paru"
+    ( cd "$TMPDIR/paru" && makepkg -si --noconfirm )
+    rm -rf "$TMPDIR"
+  fi
+
+  paru -S --needed --noconfirm $(grep -Ev '^(#|$)' "$AUR_LIST")
+else
+  echo "Non-Arch Linux: skipping package install"
+fi
+{{- end }}
