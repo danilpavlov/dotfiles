@@ -10,7 +10,7 @@ dev() {
     return
   fi
 
-  tmux new-session -d -s "$session_name" -n EDITOR
+  tmux new-session -d -s "$session_name" -n EDITOR 'nvim'
   tmux new-window -t "$session_name:" -n SHELL
 
   tmux select-window -t "$session_name:1"
