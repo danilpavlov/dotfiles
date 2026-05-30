@@ -16,6 +16,8 @@ return {
       "svelte",
       "python",
       "glsl",
+      "make",
+      "groovy",
     },
     sync_install = false,
     auto_install = true,

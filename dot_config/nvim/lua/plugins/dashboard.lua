@@ -32,6 +32,7 @@ return {
           { action = 'lua LazyVim.pick("oldfiles")()',                 desc = " Recent",    icon = " ", key = "r" },
           { action = 'lua LazyVim.pick()()',                           desc = " Files",       icon = " ", key = "<leader>" },
           { action = 'lua LazyVim.pick("live_grep")()',                desc = " Grep",       icon = " ", key = "/" },
+          { action = "lua require('oil').open(vim.uv.cwd())",           desc = " Oil",        icon = "󰉋", key = "-" },
           -- { action = "ene | startinsert",                              desc = " New File",        icon = " ", key = "n" },
           -- { action = 'lua LazyVim.pick.config_files()()',              desc = " Config",          icon = " ", key = "c" },
           -- { action = 'lua require("persistence").load()',              desc = " Restore Session", icon = " ", key = "s" },
