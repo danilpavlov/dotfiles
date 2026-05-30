@@ -15,7 +15,7 @@ Tested on:
 
 ### Bootstrap
 ```sh
-chezmoi init --apply git@github.com:eyeonyou/dotfiles.git
+chezmoi init --apply git@github.com:danilpavlov/dotfiles.git
 ```
 
 This will:
