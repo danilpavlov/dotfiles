@@ -1,0 +1,31 @@
+# Path to oh-my-zsh installation
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="murilasso"
+
+plugins=(
+	git
+	asdf
+	zsh-autosuggestions
+	zsh-syntax-highlighting
+	docker
+	colorize
+	colored-man-pages
+	fasd
+	tmux
+	mongocli
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# Modular config — keep this file thin
+for f in ~/.config/zsh/exports.zsh ~/.config/zsh/path.zsh ~/.config/zsh/aliases.zsh ~/.config/zsh/functions.zsh; do
+  [ -r "$f" ] && source "$f"
+done
+
+# Per-machine secrets (not in git)
+[ -r ~/.config/zsh/work.zsh ] && source ~/.config/zsh/work.zsh
+
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$(/opt/homebrew/bin/brew shellenv)"
+{{- end }}

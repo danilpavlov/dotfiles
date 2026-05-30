@@ -1,0 +1,9 @@
+# Copy to ~/.config/zsh/work.zsh and fill in. The example is committed; the
+# real file is gitignored.
+
+export OPENAI_BASE_URL=
+export KUBECONFIG=
+export proxy=
+
+alias claude="HTTP_PROXY=$proxy HTTPS_PROXY=$proxy claude"
+# alias gowork="${HOME}/Downloads/work/platform"
