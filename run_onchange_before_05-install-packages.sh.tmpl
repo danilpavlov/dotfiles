@@ -50,6 +50,33 @@ elif [ -r /etc/debian_version ] || command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update
     sudo apt-get install -y eza || echo "eza install failed; ll/ls aliases will be degraded"
   fi
+
+  # Neovim — Debian's apt build is too old for LazyVim (which needs >= 0.11.2;
+  # trixie ships 0.10.x). Install the official static tarball into ~/.local (no
+  # sudo); ~/.local/bin is ahead of /usr/bin on PATH, so this overrides any
+  # apt-provided nvim.
+  NVIM_VERSION="v0.12.3"
+  case "$(uname -m)" in
+    aarch64 | arm64) NVIM_ARCH="arm64" ;;
+    x86_64 | amd64)  NVIM_ARCH="x86_64" ;;
+    *) NVIM_ARCH="" ; echo "Unknown arch $(uname -m); skipping Neovim tarball (apt nvim may be too old for LazyVim)" ;;
+  esac
+  if [ -n "$NVIM_ARCH" ] && \
+     [ "$("$HOME/.local/nvim-linux-$NVIM_ARCH/bin/nvim" --version 2>/dev/null | head -1)" != "NVIM $NVIM_VERSION" ]; then
+    echo "Installing Neovim $NVIM_VERSION ($NVIM_ARCH) into ~/.local..."
+    TARBALL="nvim-linux-$NVIM_ARCH.tar.gz"
+    NVIM_TMP="$(mktemp -d)"
+    if curl -fsSL -o "$NVIM_TMP/$TARBALL" \
+         "https://github.com/neovim/neovim/releases/download/$NVIM_VERSION/$TARBALL"; then
+      rm -rf "$HOME/.local/nvim-linux-$NVIM_ARCH"
+      tar -xzf "$NVIM_TMP/$TARBALL" -C "$HOME/.local"
+      mkdir -p "$HOME/.local/bin"
+      ln -sf "$HOME/.local/nvim-linux-$NVIM_ARCH/bin/nvim" "$HOME/.local/bin/nvim"
+    else
+      echo "neovim download failed; falling back to apt nvim (may be too old for LazyVim)"
+    fi
+    rm -rf "$NVIM_TMP"
+  fi
 else
   echo "Unsupported Linux distro: skipping package install"
 fi

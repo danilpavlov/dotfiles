@@ -58,8 +58,12 @@ which would otherwise hijack host→container traffic.
 
 Minimal headless CLI environment (shell, tmux, nvim, cli tools) installed via
 `apt` from `packages/debian-apt.txt`. `fd`/`bat` are symlinked from Debian's
-`fdfind`/`batcat`, and `eza` is installed from the maintainer's apt repo. The
-snx-rs VPN client is built from source for ARM by `run_once_after_40-install-snx-rs.sh`.
+`fdfind`/`batcat`, and `eza` is installed from the maintainer's apt repo.
+Neovim is **not** taken from apt — Debian's build (0.10.x) is too old for
+LazyVim (needs >= 0.11.2), so the package script downloads the official static
+tarball (`nvim-linux-arm64`/`x86_64`) into `~/.local` and symlinks it onto
+`PATH` ahead of any apt nvim. The snx-rs VPN client is built from source for ARM
+by `run_once_after_40-install-snx-rs.sh`.
 
 ## Layout
 
