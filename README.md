@@ -21,9 +21,9 @@ chezmoi init --apply git@github.com:danilpavlov/dotfiles.git
 
 This will:
 1. Clone the repo into `~/.local/share/chezmoi`.
-2. Run `run_once_before_*` scripts to install oh-my-zsh and its plugins.
-3. Render templates and write your `~/.zshrc`, `~/.config/...` files.
-4. Run `run_onchange_30-install-packages.sh` to install the packages from the manifest (`Brewfile` on macOS, `pacman` + AUR via `paru` on Arch, `apt` on Debian/Raspberry Pi OS).
+2. Run `run_onchange_before_05-install-packages.sh` to install the packages from the manifest (`Brewfile` on macOS, `pacman` + AUR via `paru` on Arch, `apt` on Debian/Raspberry Pi OS). This runs first so `zsh` exists before oh-my-zsh needs it.
+3. Run `run_once_before_*` scripts to install oh-my-zsh and its plugins.
+4. Render templates and write your `~/.zshrc`, `~/.config/...` files.
 5. On Linux, run `run_once_after_40-install-snx-rs.sh` to build the snx-rs VPN client from source if it isn't already present.
 
 After it finishes, copy and fill in the secrets templates:
@@ -88,9 +88,9 @@ dotfiles/
 │   ├── arch-pacman.txt
 │   ├── arch-aur.txt
 │   └── debian-apt.txt          # Raspberry Pi / Debian, minimal headless CLI
+├── run_onchange_before_05-install-packages.sh.tmpl  # runs before omz so zsh exists
 ├── run_once_before_10-install-omz.sh.tmpl
 ├── run_once_before_20-install-omz-plugins.sh.tmpl
-├── run_onchange_30-install-packages.sh.tmpl
 ├── run_once_after_40-install-snx-rs.sh.tmpl   # build snx-rs from source on Linux
 └── docs/                       # spec + plan history
 ```
