@@ -5,6 +5,9 @@
 #   - fd  is the `fd-find` package (binary `fdfind`) -> symlinked to `fd`
 #   - bat is the `bat` package      (binary `batcat`) -> symlinked to `bat`
 #   - eza is NOT in Debian repos    -> installed from the gierens apt repo
+#   - neovim is NOT installed here  -> Debian's build is too old for LazyVim
+#                                      (needs >= 0.11.2); installed from the
+#                                      official static tarball by the package script
 #   - cbonsai / k9s / pyenv         -> not packaged; skipped on headless
 
 build-essential
@@ -12,7 +15,6 @@ pkg-config
 curl
 git
 zsh
-neovim
 tmux
 fzf
 fd-find
