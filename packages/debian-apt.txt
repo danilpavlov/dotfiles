@@ -1,0 +1,25 @@
+# Debian / Raspberry Pi OS packages (apt). Minimal headless CLI set.
+# One per line. Comments and blanks OK.
+#
+# Notes on naming/availability vs the Arch/Brew lists:
+#   - fd  is the `fd-find` package (binary `fdfind`) -> symlinked to `fd`
+#   - bat is the `bat` package      (binary `batcat`) -> symlinked to `bat`
+#   - eza is NOT in Debian repos    -> installed from the gierens apt repo
+#   - cbonsai / k9s / pyenv         -> not packaged; skipped on headless
+
+build-essential
+pkg-config
+curl
+git
+zsh
+neovim
+tmux
+fzf
+fd-find
+bat
+btop
+htop
+ripgrep
+thefuck
+zsh-autosuggestions
+zsh-syntax-highlighting

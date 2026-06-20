@@ -5,6 +5,7 @@ My personal dotfiles, managed with [chezmoi](https://www.chezmoi.io/).
 Tested on:
 - **macOS** (Sonoma+)
 - **Arch Linux** (Hyprland + sddm)
+- **Raspberry Pi OS / Debian** (minimal headless CLI)
 
 ## Install on a new machine
 
@@ -22,15 +23,43 @@ This will:
 1. Clone the repo into `~/.local/share/chezmoi`.
 2. Run `run_once_before_*` scripts to install oh-my-zsh and its plugins.
 3. Render templates and write your `~/.zshrc`, `~/.config/...` files.
-4. Run `run_onchange_30-install-packages.sh` to install the packages from the manifest (`Brewfile` on macOS, `pacman` + AUR via `paru` on Arch).
+4. Run `run_onchange_30-install-packages.sh` to install the packages from the manifest (`Brewfile` on macOS, `pacman` + AUR via `paru` on Arch, `apt` on Debian/Raspberry Pi OS).
+5. On Linux, run `run_once_after_40-install-snx-rs.sh` to build the snx-rs VPN client from source if it isn't already present.
 
-After it finishes, copy and fill in the secrets template:
+After it finishes, copy and fill in the secrets templates:
 ```sh
 cp ~/.config/zsh/work.zsh.example ~/.config/zsh/work.zsh
 $EDITOR ~/.config/zsh/work.zsh
+
+cp ~/.config/snx-rs/vpn.conf.example ~/.config/snx-rs/vpn.conf
+$EDITOR ~/.config/snx-rs/vpn.conf
 ```
 
 Open a new terminal and you're done.
+
+## VPN (snx-rs)
+
+The `~/.local/bin/vpn` launcher starts the [snx-rs](https://github.com/ancwrd1/snx-rs)
+Check Point VPN client. Connection parameters (server, login type, user, routes
+to ignore) live in `~/.config/snx-rs/vpn.conf` — gitignored, copied from
+`vpn.conf.example`. `~/.local/bin/home-tmux.sh` runs the tunnel inside a detached
+`HOME` tmux session at login.
+
+`vpn` calls `sudo -n snx-rs`, so the binary needs passwordless sudo. Add a
+sudoers drop-in, e.g.:
+```sh
+echo "$USER ALL=(root) NOPASSWD: $(command -v snx-rs)" | sudo tee /etc/sudoers.d/snx-rs
+```
+
+`VPN_IGNORE_ROUTES` drops corporate routes that overlap local docker subnets,
+which would otherwise hijack host→container traffic.
+
+## Raspberry Pi / Debian
+
+Minimal headless CLI environment (shell, tmux, nvim, cli tools) installed via
+`apt` from `packages/debian-apt.txt`. `fd`/`bat` are symlinked from Debian's
+`fdfind`/`batcat`, and `eza` is installed from the maintainer's apt repo. The
+snx-rs VPN client is built from source for ARM by `run_once_after_40-install-snx-rs.sh`.
 
 ## Layout
 
@@ -44,18 +73,25 @@ dotfiles/
 │   │   ├── exports.zsh         # env vars + tool integrations
 │   │   ├── path.zsh            # PATH wiring + pyenv init
 │   │   └── work.zsh.example    # template for per-machine secrets
+│   ├── snx-rs/
+│   │   └── vpn.conf.example    # template for VPN connection params
 │   ├── nvim/                   # LazyVim
 │   ├── tmux/tmux.conf
 │   ├── ghostty/config.tmpl     # OS-templated (cmd+s on macOS, ctrl+s on Linux)
 │   ├── bat/, btop/, eza/, htop/, posting/
 │   └── hypr/                   # Hyprland — populated on Arch
+├── dot_local/bin/
+│   ├── executable_vpn          # snx-rs VPN launcher (reads ~/.config/snx-rs/vpn.conf)
+│   └── executable_home-tmux.sh # detached HOME tmux session running the tunnel
 ├── packages/
 │   ├── Brewfile
 │   ├── arch-pacman.txt
-│   └── arch-aur.txt
+│   ├── arch-aur.txt
+│   └── debian-apt.txt          # Raspberry Pi / Debian, minimal headless CLI
 ├── run_once_before_10-install-omz.sh.tmpl
 ├── run_once_before_20-install-omz-plugins.sh.tmpl
 ├── run_onchange_30-install-packages.sh.tmpl
+├── run_once_after_40-install-snx-rs.sh.tmpl   # build snx-rs from source on Linux
 └── docs/                       # spec + plan history
 ```
 
@@ -77,7 +113,9 @@ linux-only line
 
 ## Secrets
 
-Don't commit them. `~/.config/zsh/work.zsh` is gitignored. The example file (`work.zsh.example`) is committed as a template.
+Don't commit them. `~/.config/zsh/work.zsh` and `~/.config/snx-rs/vpn.conf` are
+gitignored. Their example files (`work.zsh.example`, `vpn.conf.example`) are
+committed as templates.
 
 ## Wallpapers
 
