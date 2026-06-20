@@ -1,0 +1,23 @@
+# snx-rs VPN connection parameters — sourced by ~/.local/bin/vpn.
+#
+# Copy this file to ~/.config/snx-rs/vpn.conf and fill in real values.
+# The example is committed to the dotfiles repo; the real vpn.conf is gitignored.
+
+# VPN gateway, "host" or "host:port" (default port 443).
+VPN_SERVER="vpn.example.com"
+
+# Authentication method, as advertised by the gateway (e.g. vpn_Xxx).
+VPN_LOGIN_TYPE="vpn_Xxx"
+
+# User name to authenticate with.
+VPN_USER="your_user"
+
+# Comma-separated routes (x.x.x.x/x) to ignore from the ones the gateway pushes.
+# Useful when corporate routes overlap local docker subnets. Leave empty to keep
+# all routes acquired from the server.
+VPN_IGNORE_ROUTES="172.20.0.0/16,172.21.0.0/23"
+
+# Path to the snx-rs binary. Leave empty to auto-detect from PATH.
+# On machines that build from source, e.g.:
+#   SNX_BIN="$HOME/github/snx-rs/target/release/snx-rs"
+SNX_BIN=""

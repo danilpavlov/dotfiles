@@ -1,5 +1,5 @@
 #!/bin/sh
-# packages hash: {{ include "packages/Brewfile" | sha256sum }} {{ include "packages/arch-pacman.txt" | sha256sum }} {{ include "packages/arch-aur.txt" | sha256sum }}
+# packages hash: {{ include "packages/Brewfile" | sha256sum }} {{ include "packages/arch-pacman.txt" | sha256sum }} {{ include "packages/arch-aur.txt" | sha256sum }} {{ include "packages/debian-apt.txt" | sha256sum }}
 set -eu
 
 {{ if eq .chezmoi.os "darwin" -}}
@@ -26,7 +26,31 @@ if [ -r /etc/arch-release ]; then
   fi
 
   paru -S --needed --noconfirm $(grep -Ev '^(#|$)' "$AUR_LIST")
+elif [ -r /etc/debian_version ] || command -v apt-get >/dev/null 2>&1; then
+  # Debian / Raspberry Pi OS — minimal headless CLI set.
+  APT_LIST="{{ .chezmoi.sourceDir }}/packages/debian-apt.txt"
+
+  sudo apt-get update
+  sudo apt-get install -y $(grep -Ev '^(#|$)' "$APT_LIST")
+
+  # Debian ships fd as `fdfind` and bat as `batcat`; the dotfiles' aliases use
+  # the upstream names. Expose them under ~/.local/bin.
+  mkdir -p "$HOME/.local/bin"
+  command -v fdfind >/dev/null 2>&1 && ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+  command -v batcat >/dev/null 2>&1 && ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+
+  # eza is not in the Debian repos — install it from the maintainer's apt repo.
+  if ! command -v eza >/dev/null 2>&1; then
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
+      | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+      | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
+    sudo chmod 0644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+    sudo apt-get update
+    sudo apt-get install -y eza || echo "eza install failed; ll/ls aliases will be degraded"
+  fi
 else
-  echo "Non-Arch Linux: skipping package install"
+  echo "Unsupported Linux distro: skipping package install"
 fi
 {{- end }}

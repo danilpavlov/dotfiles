@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# snx-rs VPN launcher.
+#
+# Connection parameters live in ~/.config/snx-rs/vpn.conf (gitignored) — copy
+# vpn.conf.example there and fill in real values. This keeps corporate
+# identifiers out of the public dotfiles repo.
+#
+# VPN_IGNORE_ROUTES exists because some corporate routes overlap local docker
+# networks: host->container traffic would otherwise be pulled into the tunnel
+# and hang (TCP connect to published ports "succeeds" via docker-proxy, but no
+# data flows). Ignoring those subnets keeps local containers reachable.
+set -euo pipefail
+
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/snx-rs/vpn.conf"
+
+if [ ! -r "$CONF" ]; then
+    echo "Missing $CONF" >&2
+    echo "Copy ${CONF%/*}/vpn.conf.example to vpn.conf and fill it in." >&2
+    exit 1
+fi
+
+# shellcheck source=/dev/null
+. "$CONF"
+
+: "${VPN_SERVER:?set VPN_SERVER in $CONF}"
+: "${VPN_LOGIN_TYPE:?set VPN_LOGIN_TYPE in $CONF}"
+: "${VPN_USER:?set VPN_USER in $CONF}"
+
+# Resolve the snx-rs binary: explicit SNX_BIN, then PATH.
+SNX="${SNX_BIN:-}"
+[ -n "$SNX" ] || SNX="$(command -v snx-rs || true)"
+if [ -z "$SNX" ] || [ ! -x "$SNX" ]; then
+    echo "snx-rs binary not found. Set SNX_BIN in $CONF or install snx-rs." >&2
+    exit 1
+fi
+
+if pgrep -x snx-rs >/dev/null; then
+    echo "snx-rs already running (pid $(pgrep -x snx-rs | head -1))"
+    exit 0
+fi
+
+args=(-s "$VPN_SERVER" -o "$VPN_LOGIN_TYPE" -u "$VPN_USER" -X true -l info)
+if [ -n "${VPN_IGNORE_ROUTES:-}" ]; then
+    args+=(-I "$VPN_IGNORE_ROUTES")
+fi
+
+exec sudo -n "$SNX" "${args[@]}"
