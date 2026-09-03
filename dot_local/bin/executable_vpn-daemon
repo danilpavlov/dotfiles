@@ -1,0 +1,284 @@
+#!/usr/bin/env bash
+# vpn-daemon — keeps the snx-rs VPN tunnel up without a human at the keyboard.
+#
+# The gateway (login type vpn_Indeed) asks for two factors, in this order:
+#   1. a one-time code from the Indeed Key phone app,
+#   2. the AD (domain) password.
+# The phone forwards a code to a small webhook server (indeed-key-parser) every
+# time you tap the token in Indeed Key. This daemon loops forever:
+#
+#   1. If snx-rs is already running (e.g. started by `vpn` in tmux), adopt it:
+#      just wait until it exits.
+#   2. Otherwise poll the webhook until a FRESH code for VPN_TOTP_ACCOUNT shows
+#      up: newer than the last code we used and not older than VPN_TOTP_MAX_AGE.
+#      Codes appear only when you tap the token, so while waiting the daemon
+#      sends a desktop notification asking you to do that.
+#   3. Launch snx-rs non-interactively: the code answers factor 1, the password
+#      answers factor VPN_PASSWORD_FACTOR (2). The password goes through a
+#      0600 config file in XDG_RUNTIME_DIR; the one-time code is passed as
+#      `-F <code>` on the command line (the config-file `mfa-code` key only
+#      exists in snx-rs builds newer than 2026-08-05, and a 6-digit code that
+#      is dead within a minute is harmless in argv).
+#   4. When snx-rs exits (tunnel dropped, auth failed, gateway kicked us) go
+#      back to step 2.
+#
+# Configuration comes from the environment; anything not set there is read
+# from ~/.config/snx-rs/vpn.conf (the same file the `vpn` launcher uses).
+#
+#   VPN_SERVER, VPN_LOGIN_TYPE, VPN_USER          gateway / login type / user (required)
+#   VPN_TUNNEL_TYPE, VPN_IGNORE_ROUTES,           same meaning as in `vpn`
+#   VPN_NO_KEEPALIVE, SNX_BIN
+#   VPN_TOTP_URL        GET endpoint returning the codes JSON (required),
+#                       e.g. http://192.168.1.93:8090/codes
+#   VPN_TOTP_TOKEN      Bearer token for VPN_TOTP_URL (required)
+#   VPN_TOTP_ACCOUNT    "account" label to pick from the JSON   [Alfa-Bank]
+#   VPN_TOTP_MAX_AGE    max code age in seconds to still use it [60]
+#   VPN_PASSWORD        domain password; falls back to $ALFA_PASSWORD (required)
+#   VPN_PASSWORD_FACTOR which prompt gets the password, 1..N   [2]
+#   VPN_POLL_INTERVAL   seconds between webhook polls           [5]
+#   VPN_RETRY_DELAY     seconds to wait after snx-rs exits      [10]
+#   VPN_NOTIFY          send desktop notifications (true/false) [true]
+#   VPN_NOTIFY_REPEAT   re-notify every N seconds while waiting [600]
+#   VPN_DAEMON_DRY_RUN  1 = do everything except launching snx-rs
+#
+# Logs go to stderr (the journal under systemd); stdout is never used for logs. Codes and passwords are never
+# logged.
+set -uo pipefail
+
+CONF="${CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/snx-rs/vpn.conf}"
+RUNDIR="${XDG_RUNTIME_DIR:-/tmp}/vpn-daemon"
+LAST_CODE_TS=""
+CHILD_PID=""
+STOPPING=""
+
+ENV_OVERRIDABLE=(
+    VPN_SERVER VPN_LOGIN_TYPE VPN_USER VPN_TUNNEL_TYPE VPN_IGNORE_ROUTES VPN_NO_KEEPALIVE SNX_BIN
+    VPN_TOTP_URL VPN_TOTP_TOKEN VPN_TOTP_ACCOUNT VPN_TOTP_MAX_AGE VPN_PASSWORD VPN_PASSWORD_FACTOR
+    VPN_POLL_INTERVAL VPN_RETRY_DELAY VPN_NOTIFY VPN_NOTIFY_REPEAT
+)
+
+log() { printf '%s vpn-daemon: %s\n' "$(date +'%F %T')" "$*" >&2; }
+die() { log "error: $*" >&2; exit 1; }
+
+# --- configuration ------------------------------------------------------------
+
+# Environment wins over vpn.conf: remember what is already set, source the
+# file (it may `export` anything), then put the environment values back.
+load_config() {
+    local -A saved=()
+    local v
+    for v in "${ENV_OVERRIDABLE[@]}"; do
+        if [ -n "${!v+x}" ]; then saved[$v]="${!v}"; fi
+    done
+    if [ -r "$CONF" ]; then
+        # shellcheck source=/dev/null
+        . "$CONF"
+    fi
+    for v in "${!saved[@]}"; do
+        printf -v "$v" '%s' "${saved[$v]}"
+    done
+
+    VPN_TOTP_ACCOUNT="${VPN_TOTP_ACCOUNT:-Alfa-Bank}"
+    VPN_TOTP_MAX_AGE="${VPN_TOTP_MAX_AGE:-60}"
+    VPN_PASSWORD="${VPN_PASSWORD:-${ALFA_PASSWORD:-}}"
+    VPN_PASSWORD_FACTOR="${VPN_PASSWORD_FACTOR:-2}"
+    VPN_POLL_INTERVAL="${VPN_POLL_INTERVAL:-5}"
+    VPN_RETRY_DELAY="${VPN_RETRY_DELAY:-10}"
+    VPN_NOTIFY="${VPN_NOTIFY:-true}"
+    VPN_NOTIFY_REPEAT="${VPN_NOTIFY_REPEAT:-600}"
+    VPN_TUNNEL_TYPE="${VPN_TUNNEL_TYPE:-}"
+    VPN_IGNORE_ROUTES="${VPN_IGNORE_ROUTES:-}"
+    VPN_NO_KEEPALIVE="${VPN_NO_KEEPALIVE:-}"
+    VPN_TOTP_URL="${VPN_TOTP_URL:-}"
+    VPN_TOTP_TOKEN="${VPN_TOTP_TOKEN:-}"
+    SNX_BIN="${SNX_BIN:-}"
+}
+
+validate_config() {
+    local v
+    for v in VPN_SERVER VPN_LOGIN_TYPE VPN_USER VPN_TOTP_URL VPN_TOTP_TOKEN; do
+        [ -n "${!v:-}" ] || die "$v is not set (environment or $CONF)"
+    done
+    [ -n "$VPN_PASSWORD" ] || die "VPN_PASSWORD / ALFA_PASSWORD is not set"
+    [ -n "$SNX_BIN" ] || SNX_BIN="$(command -v snx-rs || true)"
+    [ -n "$SNX_BIN" ] && [ -x "$SNX_BIN" ] || die "snx-rs binary not found (SNX_BIN=$SNX_BIN)"
+    command -v jq >/dev/null || die "jq is required"
+    command -v curl >/dev/null || die "curl is required"
+}
+
+# --- small helpers (overridable in tests) ---------------------------------------
+
+now_epoch() { date -u +%s; }
+
+# sleep that a TERM/INT trap can interrupt (a foreground sleep would delay it).
+pause() { sleep "$1" & wait $! 2>/dev/null; }
+
+snx_running() { pgrep -x snx-rs >/dev/null; }
+
+notify() {
+    [ "$VPN_NOTIFY" = true ] || return 0
+    command -v notify-send >/dev/null || return 0
+    notify-send -a vpn-daemon -u "${2:-normal}" "VPN" "$1" >/dev/null 2>&1 || true
+}
+
+# GET the codes JSON. The token goes through curl's config on stdin, not argv.
+fetch_codes() {
+    curl -sS -m 10 -K - "$VPN_TOTP_URL" <<< "header = \"Authorization: Bearer $VPN_TOTP_TOKEN\""
+}
+
+# --- code selection -------------------------------------------------------------
+
+# stdin: JSON array from the webhook.  args: account last_used_ts max_age now_epoch
+# stdout: "<code>\t<timestamp>" if there is a usable code; exit 1 otherwise.
+# Usable = right account, strictly newer than the last code we used, and not
+# older than max_age seconds (codes from slightly in the future are fine —
+# that is just clock skew between the phone and this machine).
+select_fresh_code() {
+    local account="$1" last_ts="$2" max_age="$3" now="$4"
+    local code ts epoch last_epoch=0
+    IFS=$'\t' read -r code ts < <(
+        jq -r --arg a "$account" \
+            '.[] | select(.account == $a) | [.code, .timestamp] | @tsv' 2>/dev/null | head -1
+    )
+    [ -n "${code:-}" ] && [ -n "${ts:-}" ] || return 1
+    epoch=$(date -u -d "$ts" +%s 2>/dev/null) || return 1
+    if [ -n "$last_ts" ]; then
+        last_epoch=$(date -u -d "$last_ts" +%s 2>/dev/null) || last_epoch=0
+    fi
+    [ "$epoch" -gt "$last_epoch" ] || return 1
+    [ $(( now - epoch )) -le "$max_age" ] || return 1
+    printf '%s\t%s\n' "$code" "$ts"
+}
+
+# Poll the webhook until a fresh code appears. Prints "<code>\t<ts>", rc 0.
+# Returns 2 (prints nothing) if snx-rs shows up meanwhile — someone started
+# the tunnel by hand, so the main loop should adopt it instead.
+wait_for_fresh_code() {
+    local body result waited=0 notified_at=""
+    while [ -z "$STOPPING" ]; do
+        if snx_running; then return 2; fi
+        if body=$(fetch_codes); then
+            if result=$(printf '%s' "$body" | select_fresh_code \
+                    "$VPN_TOTP_ACCOUNT" "$LAST_CODE_TS" "$VPN_TOTP_MAX_AGE" "$(now_epoch)"); then
+                printf '%s\n' "$result"
+                return 0
+            fi
+        else
+            log "webhook $VPN_TOTP_URL unreachable, retrying"
+        fi
+        if [ -z "$notified_at" ] || [ $(( waited - notified_at )) -ge "$VPN_NOTIFY_REPEAT" ]; then
+            log "waiting for a fresh '$VPN_TOTP_ACCOUNT' code from $VPN_TOTP_URL (open Indeed Key and tap the token)"
+            notify "Туннель отключён. Открой Indeed Key и нажми на токен «$VPN_TOTP_ACCOUNT» — код подхватится сам." critical
+            notified_at=$waited
+        fi
+        pause "$VPN_POLL_INTERVAL"
+        waited=$(( waited + VPN_POLL_INTERVAL ))
+    done
+    return 1
+}
+
+# --- launching snx-rs -----------------------------------------------------------
+
+# snx-rs config-file body for one connection attempt (everything but the code).
+render_snx_conf() {
+    printf 'server-name=%s\n' "$VPN_SERVER"
+    printf 'login-type=%s\n' "$VPN_LOGIN_TYPE"
+    printf 'user-name=%s\n' "$VPN_USER"
+    printf 'password=%s\n' "$(printf '%s' "$VPN_PASSWORD" | base64 -w0)"
+    printf 'password-factor=%s\n' "$VPN_PASSWORD_FACTOR"
+    printf 'ignore-server-cert=true\n'
+    printf 'log-level=info\n'
+    [ -n "$VPN_TUNNEL_TYPE" ] && printf 'tunnel-type=%s\n' "$VPN_TUNNEL_TYPE"
+    [ -n "$VPN_IGNORE_ROUTES" ] && printf 'ignore-routes=%s\n' "$VPN_IGNORE_ROUTES"
+    [ "$VPN_NO_KEEPALIVE" = true ] && printf 'no-keepalive=true\n'
+    return 0
+}
+
+redact_conf() { sed -E 's/^(password)=.*/\1=<REDACTED>/'; }
+
+remember_code() {
+    LAST_CODE_TS="$1"
+    printf '%s\n' "$1" > "$RUNDIR/last-code-ts"
+}
+
+# Run one snx-rs session to completion. args: code ts
+launch_tunnel() {
+    local code="$1" ts="$2" conf="$RUNDIR/snx.conf" started rc
+    remember_code "$ts"
+    ( umask 077; render_snx_conf > "$conf" ) || die "cannot write $conf"
+
+    if [ "${VPN_DAEMON_DRY_RUN:-}" = 1 ]; then
+        log "dry run: would exec sudo -n $SNX_BIN -c $conf -F <code> with:"
+        redact_conf < "$conf" | sed 's/^/    /'
+        rm -f "$conf"
+        return 0
+    fi
+
+    log "code from $ts accepted, starting snx-rs ($VPN_USER@$VPN_SERVER, password on factor $VPN_PASSWORD_FACTOR)"
+    started=$(now_epoch)
+    sudo -n "$SNX_BIN" -c "$conf" -F "$code" &
+    CHILD_PID=$!
+    wait "$CHILD_PID"; rc=$?
+    # `wait` returns early if a signal arrived; wait again for the real status.
+    while [ -n "$CHILD_PID" ] && kill -0 "$CHILD_PID" 2>/dev/null; do wait "$CHILD_PID"; rc=$?; done
+    CHILD_PID=""
+    rm -f "$conf"
+    local ran=$(( $(now_epoch) - started ))
+    log "snx-rs exited with status $rc after ${ran}s"
+    if [ "$ran" -lt 30 ] && [ "$rc" -ne 0 ]; then
+        log "exited almost immediately — if the log above says the login failed, check VPN_PASSWORD, VPN_PASSWORD_FACTOR and that the code was still valid"
+    fi
+    return "$rc"
+}
+
+on_signal() {
+    STOPPING=1
+    log "stopping"
+    if [ -n "$CHILD_PID" ]; then
+        # The child runs as root via sudo, so a plain kill would be refused.
+        sudo -n pkill -TERM -x snx-rs 2>/dev/null || true
+    fi
+}
+
+# --- main loop ------------------------------------------------------------------
+
+main() {
+    load_config
+    validate_config
+    mkdir -p "$RUNDIR" && chmod 700 "$RUNDIR"
+    rm -f "$RUNDIR/snx.conf"
+    [ -r "$RUNDIR/last-code-ts" ] && LAST_CODE_TS="$(< "$RUNDIR/last-code-ts")"
+    trap on_signal TERM INT
+
+    log "started: $VPN_USER@$VPN_SERVER ($VPN_LOGIN_TYPE), codes from $VPN_TOTP_URL account '$VPN_TOTP_ACCOUNT' (max age ${VPN_TOTP_MAX_AGE}s), poll every ${VPN_POLL_INTERVAL}s${VPN_DAEMON_DRY_RUN:+, DRY RUN}"
+
+    local result code ts pid
+    while [ -z "$STOPPING" ]; do
+        if pid=$(pgrep -x -o snx-rs); then
+            log "snx-rs already running (pid $pid), adopting it"
+            while [ -z "$STOPPING" ] && snx_running; do pause "$VPN_POLL_INTERVAL"; done
+            [ -z "$STOPPING" ] && log "snx-rs (pid $pid) is gone"
+            continue
+        fi
+
+        result=$(wait_for_fresh_code); rc=$?
+        [ "$rc" -eq 0 ] || continue          # 2 = adopt, 1 = stopping
+        IFS=$'\t' read -r code ts <<< "$result"
+        if [ -z "$code" ] || [ -z "$ts" ]; then
+            log "internal error: bad code/timestamp from the webhook step, retrying"
+            pause "$VPN_RETRY_DELAY"; continue
+        fi
+
+        launch_tunnel "$code" "$ts"
+        if [ "${VPN_DAEMON_DRY_RUN:-}" = 1 ]; then
+            log "dry run finished"
+            return 0
+        fi
+        [ -z "$STOPPING" ] && pause "$VPN_RETRY_DELAY"
+    done
+    log "stopped"
+}
+
+if [ -z "${VPN_DAEMON_SOURCED:-}" ]; then
+    main "$@"
+fi
