@@ -6,6 +6,8 @@
 #   - bat is the `bat` package      (binary `batcat`) -> symlinked to `bat`
 #   - eza is NOT in Debian repos    -> installed from the gierens apt repo
 #   - cbonsai / k9s / pyenv         -> not packaged; skipped on headless
+#   - prometheus-node-exporter      -> ships a systemd service on :9100,
+#                                      hwmon collector on (Pi temp works OOTB)
 
 build-essential
 pkg-config
@@ -23,3 +25,6 @@ ripgrep
 thefuck
 zsh-autosuggestions
 zsh-syntax-highlighting
+
+# observability — Prometheus node exporter (metrics on :9100 via systemd)
+prometheus-node-exporter
