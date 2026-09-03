@@ -9,6 +9,11 @@
 # networks: host->container traffic would otherwise be pulled into the tunnel
 # and hang (TCP connect to published ports "succeeds" via docker-proxy, but no
 # data flows). Ignoring those subnets keeps local containers reachable.
+#
+# VPN_NO_KEEPALIVE exists because the Alfa gateway does not answer snx-rs IPsec
+# keepalive packets, even though ESP data flows fine. snx-rs would treat the
+# missing replies as a dead tunnel and tear it down after 5 retries
+# ("Keepalive failed"). Disabling keepalive keeps the working tunnel alive.
 set -euo pipefail
 
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/snx-rs/vpn.conf"
@@ -42,6 +47,12 @@ fi
 args=(-s "$VPN_SERVER" -o "$VPN_LOGIN_TYPE" -u "$VPN_USER" -X true -l info)
 if [ -n "${VPN_IGNORE_ROUTES:-}" ]; then
     args+=(-I "$VPN_IGNORE_ROUTES")
+fi
+if [ -n "${VPN_TUNNEL_TYPE:-}" ]; then
+    args+=(-e "$VPN_TUNNEL_TYPE")
+fi
+if [ "${VPN_NO_KEEPALIVE:-}" = "true" ]; then
+    args+=(-A true)
 fi
 
 exec sudo -n "$SNX" "${args[@]}"
