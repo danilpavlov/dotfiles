@@ -54,12 +54,47 @@ echo "$USER ALL=(root) NOPASSWD: $(command -v snx-rs)" | sudo tee /etc/sudoers.d
 `VPN_IGNORE_ROUTES` drops corporate routes that overlap local docker subnets,
 which would otherwise hijack host→container traffic.
 
+### Unattended reconnects (`vpn-daemon`)
+
+`~/.local/bin/vpn-daemon` keeps the tunnel up without typing anything: when
+snx-rs exits it polls the [indeed-key-parser](https://github.com/danilpavlov/indeed-key-parser)
+webhook for a fresh Indeed Key code, then relaunches snx-rs with the code on
+factor 1 and the AD password on factor 2 (`VPN_PASSWORD_FACTOR`). Codes reach
+the webhook only when you tap the token in Indeed Key, so the daemon sends a
+desktop notification while it waits. A tunnel started by hand with `vpn` is
+adopted, not restarted.
+
+It reads `vpn.conf` for the gateway settings; the webhook URL/token and the
+password come from the environment — for the user unit that is
+`~/.config/snx-rs/vpn-daemon.env` (copy `vpn-daemon.env.example`, `chmod 600`):
+
+```sh
+systemctl --user enable --now vpn-daemon.service
+vpnctl status          # daemon state, snx-rs pid, tunnel interface
+vpnctl stop|start|restart|reconnect|logs
+```
+
+The one-time code is passed as `-F <code>` on the snx-rs command line: the
+config-file `mfa-code` key needs an snx-rs built after 2026-08-05, and older
+builds silently ignore it and fall back to a TTY prompt. Root-owned snx-rs
+output is not visible in `journalctl --user`; use
+`sudo journalctl _SYSTEMD_USER_UNIT=vpn-daemon.service`.
+
+Set `VPN_DAEMON_DRY_RUN=1` to see what it would launch without touching snx-rs.
+
 ## Raspberry Pi / Debian
 
 Minimal headless CLI environment (shell, tmux, nvim, cli tools) installed via
 `apt` from `packages/debian-apt.txt`. `fd`/`bat` are symlinked from Debian's
 `fdfind`/`batcat`, and `eza` is installed from the maintainer's apt repo. The
 snx-rs VPN client is built from source for ARM by `run_once_after_40-install-snx-rs.sh`.
+
+`prometheus-node-exporter` is installed from the same apt list. It ships its own
+systemd service (enabled + started automatically) exposing host metrics — CPU,
+RAM, disk, network, and chip temperature via the hwmon collector — at
+`http://<pi>:9100/metrics`. Point a Prometheus instance at that target to scrape
+it. Check it's up with `systemctl status prometheus-node-exporter` and
+`curl -s localhost:9100/metrics | head`.
 
 ## Layout
 
