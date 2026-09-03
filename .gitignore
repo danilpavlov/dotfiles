@@ -11,3 +11,4 @@ __pycache__/
 # Per-machine secrets (real file is local, example is in repo)
 dot_config/zsh/work.zsh
 dot_config/snx-rs/vpn.conf
+dot_config/snx-rs/vpn-daemon.env

@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# vpnctl — start / stop / restart the VPN tunnel managed by vpn-daemon.
+#
+#   vpnctl start     start vpn-daemon.service (it adopts a running snx-rs or
+#                    waits for a fresh Indeed code and connects)
+#   vpnctl stop      stop the daemon AND tear down snx-rs, even one started by
+#                    hand with `vpn` (it runs as root, hence sudo)
+#   vpnctl restart   stop, then start — a new Indeed code will be needed
+#   vpnctl reconnect keep the daemon, just kill snx-rs so it reconnects
+#   vpnctl status    unit state, snx-rs pid, tunnel interface, last log lines
+#   vpnctl logs      follow the daemon journal
+set -uo pipefail
+
+UNIT=vpn-daemon.service
+SNX=snx-rs
+
+snx_pid() { pgrep -x -o "$SNX"; }
+
+kill_snx() {
+    local pid i
+    pid=$(snx_pid) || return 0
+    echo "stopping $SNX (pid $pid)"
+    sudo -n pkill -TERM -x "$SNX" || { echo "sudo -n pkill failed" >&2; return 1; }
+    for i in $(seq 1 20); do
+        snx_pid >/dev/null || return 0
+        sleep 0.5
+    done
+    echo "$SNX still alive after 10s, sending KILL"
+    sudo -n pkill -KILL -x "$SNX"
+}
+
+cmd_start() {
+    systemctl --user start "$UNIT" && echo "$UNIT started"
+}
+
+cmd_stop() {
+    if systemctl --user is-active --quiet "$UNIT"; then
+        systemctl --user stop "$UNIT" && echo "$UNIT stopped"
+    else
+        echo "$UNIT is not running"
+    fi
+    kill_snx
+}
+
+cmd_reconnect() {
+    systemctl --user is-active --quiet "$UNIT" || echo "warning: $UNIT is not running, nothing will reconnect" >&2
+    kill_snx
+}
+
+cmd_status() {
+    local pid
+    printf 'daemon:  %s' "$(systemctl --user is-active "$UNIT")"
+    systemctl --user is-enabled --quiet "$UNIT" && printf ' (enabled at login)'
+    echo
+    if pid=$(snx_pid); then
+        printf 'snx-rs:  running, pid %s, up %s\n' "$pid" "$(ps -o etime= -p "$pid" | tr -d ' ')"
+    else
+        echo 'snx-rs:  not running'
+    fi
+    local ifc
+    ifc=$(ip -br addr show 2>/dev/null | awk '/^snx-/ {print $1" "$3}')
+    echo "tunnel:  ${ifc:-no snx interface}"
+    echo '--- last log lines'
+    journalctl --user -u "$UNIT" -n 5 --no-pager -o cat
+}
+
+cmd_logs() { exec journalctl --user -fu "$UNIT" -o cat; }
+
+case "${1:-}" in
+    start)     cmd_start ;;
+    stop)      cmd_stop ;;
+    restart)   cmd_stop && cmd_start ;;
+    reconnect) cmd_reconnect ;;
+    status)    cmd_status ;;
+    logs)      cmd_logs ;;
+    *)
+        sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+        exit 2
+        ;;
+esac

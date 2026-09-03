@@ -12,6 +12,10 @@ VPN_LOGIN_TYPE="vpn_Xxx"
 # User name to authenticate with.
 VPN_USER="your_user"
 
+# Tunnel type, one of: ssl, ipsec. Leave empty to use snx-rs default (ipsec).
+# Use "ssl" (TCP 443) when IPsec/ESP keepalives fail on networks that block ESP.
+VPN_TUNNEL_TYPE=""
+
 # Comma-separated routes (x.x.x.x/x) to ignore from the ones the gateway pushes.
 # Useful when corporate routes overlap local docker subnets. Leave empty to keep
 # all routes acquired from the server.
@@ -21,3 +25,16 @@ VPN_IGNORE_ROUTES="172.20.0.0/16,172.21.0.0/23"
 # On machines that build from source, e.g.:
 #   SNX_BIN="$HOME/github/snx-rs/target/release/snx-rs"
 SNX_BIN=""
+
+# --- vpn-daemon (unattended reconnects) -------------------------------------
+# The settings below are only used by ~/.local/bin/vpn-daemon. They may live
+# here or in the environment (environment wins). The daemon's secrets normally
+# go to ~/.config/snx-rs/vpn-daemon.env instead — see vpn-daemon.env.example.
+#
+# Webhook returning the Indeed Key codes and its Bearer token.
+#VPN_TOTP_URL="http://192.168.1.93:8090/codes"
+#VPN_TOTP_TOKEN="change-me"
+# "account" label to pick from the codes JSON.
+#VPN_TOTP_ACCOUNT="Alfa-Bank"
+# Prompt index that receives the password (vpn_Indeed: code first, password second).
+#VPN_PASSWORD_FACTOR="2"

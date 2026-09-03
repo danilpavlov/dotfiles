@@ -9,6 +9,8 @@
 #                                      (needs >= 0.11.2); installed from the
 #                                      official static tarball by the package script
 #   - cbonsai / k9s / pyenv         -> not packaged; skipped on headless
+#   - prometheus-node-exporter      -> ships a systemd service on :9100,
+#                                      hwmon collector on (Pi temp works OOTB)
 
 build-essential
 pkg-config
@@ -25,3 +27,6 @@ ripgrep
 thefuck
 zsh-autosuggestions
 zsh-syntax-highlighting
+
+# observability — Prometheus node exporter (metrics on :9100 via systemd)
+prometheus-node-exporter

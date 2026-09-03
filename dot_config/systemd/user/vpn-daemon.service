@@ -1,0 +1,17 @@
+[Unit]
+Description=Keep the snx-rs VPN tunnel up (auto TOTP + password)
+Documentation=file:%h/.local/bin/vpn-daemon
+
+[Service]
+Type=simple
+# Secrets and the TOTP webhook settings: VPN_TOTP_URL, VPN_TOTP_TOKEN, ALFA_PASSWORD.
+# Everything else falls back to ~/.config/snx-rs/vpn.conf. Keep the file 0600.
+EnvironmentFile=-%h/.config/snx-rs/vpn-daemon.env
+ExecStart=%h/.local/bin/vpn-daemon
+Restart=always
+RestartSec=5
+# Give snx-rs (root, via sudo) a moment to tear the tunnel down on stop.
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target
