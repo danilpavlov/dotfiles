@@ -38,3 +38,24 @@ SNX_BIN=""
 #VPN_TOTP_ACCOUNT="Alfa-Bank"
 # Prompt index that receives the password (vpn_Indeed: code first, password second).
 #VPN_PASSWORD_FACTOR="2"
+#
+# --- health check (unattended reconnects, vpn-daemon only) -------------------
+# snx-rs cannot notice a tunnel that stopped passing packets when
+# VPN_NO_KEEPALIVE is on: it keeps a dead session open indefinitely. The daemon
+# therefore asks a DNS server inside the perimeter about VPN_HEALTH_NAME every
+# VPN_HEALTH_INTERVAL seconds and, after VPN_HEALTH_FAILURES silent rounds,
+# kills snx-rs so the usual reconnect path runs. Any reply counts, NXDOMAIN
+# included — it is the round trip that is being tested, not the answer.
+#
+# Comma-separated resolvers reachable only through the tunnel; the round fails
+# only when every one of them stays silent. LEAVING THIS EMPTY DISABLES THE
+# CHECK — there is no default, corporate addresses do not belong in this repo.
+#VPN_HEALTH_DNS="10.0.0.53,10.0.1.53"
+# Name to ask about. Defaults to the VPN_SERVER host, which always resolves.
+#VPN_HEALTH_NAME=""
+# Seconds between rounds, per-query timeout, silent rounds before reconnecting,
+# and how long a freshly built tunnel gets to settle before the first round.
+#VPN_HEALTH_INTERVAL="60"
+#VPN_HEALTH_TIMEOUT="5"
+#VPN_HEALTH_FAILURES="3"
+#VPN_HEALTH_GRACE="30"
