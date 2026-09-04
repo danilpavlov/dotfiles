@@ -19,7 +19,14 @@
 #      `-F <code>` on the command line (the config-file `mfa-code` key only
 #      exists in snx-rs builds newer than 2026-08-05, and a 6-digit code that
 #      is dead within a minute is harmless in argv).
-#   4. When snx-rs exits (tunnel dropped, auth failed, gateway kicked us) go
+#   4. While the tunnel is up, ask a DNS server inside the perimeter about a
+#      name every VPN_HEALTH_INTERVAL seconds. snx-rs cannot notice a dead
+#      tunnel on its own here: the gateway ignores IPsec keepalives, so
+#      VPN_NO_KEEPALIVE is on (see `vpn`) and snx-rs will happily sit forever on
+#      a tunnel that stopped passing packets. VPN_HEALTH_FAILURES rounds in a
+#      row without a single reply mean it is gone — kill snx-rs, which is
+#      exactly what `vpnctl reconnect` does by hand.
+#   5. When snx-rs exits (tunnel dropped, auth failed, gateway kicked us) go
 #      back to step 2.
 #
 # Configuration comes from the environment; anything not set there is read
@@ -39,6 +46,13 @@
 #   VPN_RETRY_DELAY     seconds to wait after snx-rs exits      [10]
 #   VPN_NOTIFY          send desktop notifications (true/false) [true]
 #   VPN_NOTIFY_REPEAT   re-notify every N seconds while waiting [600]
+#   VPN_HEALTH_DNS      comma-separated DNS servers inside the perimeter to
+#                       probe; empty (the default) disables the health check
+#   VPN_HEALTH_NAME     name to ask them about          [the gateway host]
+#   VPN_HEALTH_INTERVAL seconds between probes                    [60]
+#   VPN_HEALTH_TIMEOUT  seconds to wait for a reply                [5]
+#   VPN_HEALTH_FAILURES failed rounds in a row before reconnecting [3]
+#   VPN_HEALTH_GRACE    seconds to let a fresh tunnel settle      [30]
 #   VPN_DAEMON_DRY_RUN  1 = do everything except launching snx-rs
 #
 # Logs go to stderr (the journal under systemd); stdout is never used for logs. Codes and passwords are never
@@ -49,12 +63,15 @@ CONF="${CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/snx-rs/vpn.conf}"
 RUNDIR="${XDG_RUNTIME_DIR:-/tmp}/vpn-daemon"
 LAST_CODE_TS=""
 CHILD_PID=""
+HEALTH_PID=""
 STOPPING=""
 
 ENV_OVERRIDABLE=(
     VPN_SERVER VPN_LOGIN_TYPE VPN_USER VPN_TUNNEL_TYPE VPN_IGNORE_ROUTES VPN_NO_KEEPALIVE SNX_BIN
     VPN_TOTP_URL VPN_TOTP_TOKEN VPN_TOTP_ACCOUNT VPN_TOTP_MAX_AGE VPN_PASSWORD VPN_PASSWORD_FACTOR
     VPN_POLL_INTERVAL VPN_RETRY_DELAY VPN_NOTIFY VPN_NOTIFY_REPEAT
+    VPN_HEALTH_DNS VPN_HEALTH_NAME VPN_HEALTH_INTERVAL VPN_HEALTH_TIMEOUT
+    VPN_HEALTH_FAILURES VPN_HEALTH_GRACE
 )
 
 log() { printf '%s vpn-daemon: %s\n' "$(date +'%F %T')" "$*" >&2; }
@@ -92,6 +109,15 @@ load_config() {
     VPN_TOTP_URL="${VPN_TOTP_URL:-}"
     VPN_TOTP_TOKEN="${VPN_TOTP_TOKEN:-}"
     SNX_BIN="${SNX_BIN:-}"
+    # No default server list: the addresses inside a corporate perimeter belong
+    # in vpn.conf (gitignored), not in the dotfiles repo. Empty = check off.
+    VPN_HEALTH_DNS="${VPN_HEALTH_DNS:-}"
+    VPN_HEALTH_NAME="${VPN_HEALTH_NAME:-${VPN_SERVER:-}}"
+    VPN_HEALTH_NAME="${VPN_HEALTH_NAME%%:*}"
+    VPN_HEALTH_INTERVAL="${VPN_HEALTH_INTERVAL:-60}"
+    VPN_HEALTH_TIMEOUT="${VPN_HEALTH_TIMEOUT:-5}"
+    VPN_HEALTH_FAILURES="${VPN_HEALTH_FAILURES:-3}"
+    VPN_HEALTH_GRACE="${VPN_HEALTH_GRACE:-30}"
 }
 
 validate_config() {
@@ -104,6 +130,10 @@ validate_config() {
     [ -n "$SNX_BIN" ] && [ -x "$SNX_BIN" ] || die "snx-rs binary not found (SNX_BIN=$SNX_BIN)"
     command -v jq >/dev/null || die "jq is required"
     command -v curl >/dev/null || die "curl is required"
+    if [ -n "$VPN_HEALTH_DNS" ]; then
+        [ -n "$VPN_HEALTH_NAME" ] || die "VPN_HEALTH_NAME is empty and VPN_SERVER gives no host to ask about"
+        command -v python3 >/dev/null || die "python3 is required by the health check (unset VPN_HEALTH_DNS to turn it off)"
+    fi
 }
 
 # --- small helpers (overridable in tests) ---------------------------------------
@@ -177,6 +207,93 @@ wait_for_fresh_code() {
     return 1
 }
 
+# --- tunnel health --------------------------------------------------------------
+
+# One UDP DNS query for VPN_HEALTH_NAME to the server in $1 ("addr" or
+# "addr:port"), giving up after VPN_HEALTH_TIMEOUT seconds. Any well-formed
+# reply carrying our transaction id counts as success, NXDOMAIN included: what
+# is being tested is whether packets still survive the round trip through the
+# tunnel, not what the answer says.
+dns_probe() {
+    HEALTH_SERVER="$1" HEALTH_NAME="$VPN_HEALTH_NAME" HEALTH_TIMEOUT="$VPN_HEALTH_TIMEOUT" \
+        python3 -c '
+import os, random, socket, struct, sys
+
+server, _, port = os.environ["HEALTH_SERVER"].partition(":")
+query_id = random.randrange(0x10000)
+packet = struct.pack(">HHHHHH", query_id, 0x0100, 1, 0, 0, 0)
+for label in os.environ["HEALTH_NAME"].rstrip(".").split("."):
+    packet += bytes([len(label)]) + label.encode()
+packet += b"\x00" + struct.pack(">HH", 1, 1)   # QTYPE A, QCLASS IN
+
+try:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.settimeout(float(os.environ["HEALTH_TIMEOUT"]))
+        sock.sendto(packet, (server, int(port or 53)))
+        while True:   # ignore stray datagrams until the timeout fires
+            reply = sock.recv(512)
+            if len(reply) >= 12 and reply[:2] == packet[:2]:
+                sys.exit(0)
+except OSError:
+    sys.exit(1)
+' 2>/dev/null
+}
+
+# Watchdog for one tunnel session; runs in the background next to snx-rs.
+# Ends either by killing snx-rs (the main loop then reconnects, exactly like
+# `vpnctl reconnect`) or quietly, once the session it belongs to is over.
+# Reconnecting costs a fresh Indeed code, i.e. a tap on the phone, so it takes
+# every configured server going quiet VPN_HEALTH_FAILURES rounds in a row.
+health_watch() {
+    local target_pid fails=0 server answered
+    pause "$VPN_HEALTH_GRACE"
+    target_pid=$(pgrep -x -o snx-rs) || return 0
+    while :; do
+        # Never touch a tunnel this watcher was not started for: a reconnect
+        # may have replaced the session while we were sleeping.
+        [ "$(pgrep -x -o snx-rs 2>/dev/null)" = "$target_pid" ] || return 0
+        answered=""
+        for server in ${VPN_HEALTH_DNS//,/ }; do        # unquoted: split the list
+            if dns_probe "$server"; then answered=1; break; fi
+        done
+        if [ -n "$answered" ]; then
+            [ "$fails" -gt 0 ] && log "health check recovered after $fails failed round(s)"
+            fails=0
+        else
+            fails=$(( fails + 1 ))
+            log "health check failed ($fails/$VPN_HEALTH_FAILURES): no reply from $VPN_HEALTH_DNS about $VPN_HEALTH_NAME"
+            if [ "$fails" -ge "$VPN_HEALTH_FAILURES" ]; then
+                [ "$(pgrep -x -o snx-rs 2>/dev/null)" = "$target_pid" ] || return 0
+                log "tunnel stopped passing traffic, killing snx-rs (pid $target_pid) to force a reconnect"
+                notify "Туннель перестал отвечать — переподключаюсь." critical
+                # snx-rs runs as root via sudo, so a plain kill would be refused.
+                sudo -n pkill -TERM -x snx-rs 2>/dev/null \
+                    || log "warning: could not signal snx-rs (sudo -n refused), tunnel stays down"
+                return 0
+            fi
+        fi
+        pause "$VPN_HEALTH_INTERVAL"
+    done
+}
+
+start_health_watch() {
+    HEALTH_PID=""
+    [ -n "$VPN_HEALTH_DNS" ] || return 0
+    health_watch &
+    HEALTH_PID=$!
+}
+
+# Stop the watchdog of a session that has ended, before the next one starts.
+stop_health_watch() {
+    [ -n "$HEALTH_PID" ] || return 0
+    # `pause` sleeps in a child; kill that too, or it lingers as an orphan in
+    # the service cgroup until the interval it was in the middle of runs out.
+    pkill -TERM -P "$HEALTH_PID" 2>/dev/null
+    kill -TERM "$HEALTH_PID" 2>/dev/null
+    wait "$HEALTH_PID" 2>/dev/null
+    HEALTH_PID=""
+}
+
 # --- launching snx-rs -----------------------------------------------------------
 
 # snx-rs config-file body for one connection attempt (everything but the code).
@@ -218,10 +335,12 @@ launch_tunnel() {
     started=$(now_epoch)
     sudo -n "$SNX_BIN" -c "$conf" -F "$code" &
     CHILD_PID=$!
+    start_health_watch
     wait "$CHILD_PID"; rc=$?
     # `wait` returns early if a signal arrived; wait again for the real status.
     while [ -n "$CHILD_PID" ] && kill -0 "$CHILD_PID" 2>/dev/null; do wait "$CHILD_PID"; rc=$?; done
     CHILD_PID=""
+    stop_health_watch
     rm -f "$conf"
     local ran=$(( $(now_epoch) - started ))
     log "snx-rs exited with status $rc after ${ran}s"
@@ -234,6 +353,8 @@ launch_tunnel() {
 on_signal() {
     STOPPING=1
     log "stopping"
+    # First, so it cannot mistake a deliberate shutdown for a dead tunnel.
+    [ -n "$HEALTH_PID" ] && kill -TERM "$HEALTH_PID" 2>/dev/null
     if [ -n "$CHILD_PID" ]; then
         # The child runs as root via sudo, so a plain kill would be refused.
         sudo -n pkill -TERM -x snx-rs 2>/dev/null || true
@@ -252,11 +373,19 @@ main() {
 
     log "started: $VPN_USER@$VPN_SERVER ($VPN_LOGIN_TYPE), codes from $VPN_TOTP_URL account '$VPN_TOTP_ACCOUNT' (max age ${VPN_TOTP_MAX_AGE}s), poll every ${VPN_POLL_INTERVAL}s${VPN_DAEMON_DRY_RUN:+, DRY RUN}"
 
+    if [ -n "$VPN_HEALTH_DNS" ]; then
+        log "health check: $VPN_HEALTH_NAME via $VPN_HEALTH_DNS every ${VPN_HEALTH_INTERVAL}s (timeout ${VPN_HEALTH_TIMEOUT}s), reconnect after $VPN_HEALTH_FAILURES failed rounds"
+    else
+        log "health check off (VPN_HEALTH_DNS is not set): a tunnel that goes quiet without snx-rs exiting will not be noticed"
+    fi
+
     local result code ts pid
     while [ -z "$STOPPING" ]; do
         if pid=$(pgrep -x -o snx-rs); then
             log "snx-rs already running (pid $pid), adopting it"
+            start_health_watch
             while [ -z "$STOPPING" ] && snx_running; do pause "$VPN_POLL_INTERVAL"; done
+            stop_health_watch
             [ -z "$STOPPING" ] && log "snx-rs (pid $pid) is gone"
             continue
         fi
