@@ -4,3 +4,4 @@ ghostty
 cbonsai
 pyenv-virtualenv
 asdf-vm
+grimblast-git
