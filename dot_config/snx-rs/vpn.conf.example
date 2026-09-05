@@ -59,3 +59,5 @@ SNX_BIN=""
 #VPN_HEALTH_TIMEOUT="5"
 #VPN_HEALTH_FAILURES="3"
 #VPN_HEALTH_GRACE="30"
+# Seconds to wait for snx-rs to exit after SIGTERM before sending SIGKILL.
+#VPN_HEALTH_KILL_WAIT="15"

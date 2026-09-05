@@ -25,7 +25,8 @@
 #      VPN_NO_KEEPALIVE is on (see `vpn`) and snx-rs will happily sit forever on
 #      a tunnel that stopped passing packets. VPN_HEALTH_FAILURES rounds in a
 #      row without a single reply mean it is gone — kill snx-rs, which is
-#      exactly what `vpnctl reconnect` does by hand.
+#      exactly what `vpnctl reconnect` does by hand. A snx-rs that ignores
+#      SIGTERM for VPN_HEALTH_KILL_WAIT seconds gets SIGKILL.
 #   5. When snx-rs exits (tunnel dropped, auth failed, gateway kicked us) go
 #      back to step 2.
 #
@@ -53,6 +54,7 @@
 #   VPN_HEALTH_TIMEOUT  seconds to wait for a reply                [5]
 #   VPN_HEALTH_FAILURES failed rounds in a row before reconnecting [3]
 #   VPN_HEALTH_GRACE    seconds to let a fresh tunnel settle      [30]
+#   VPN_HEALTH_KILL_WAIT seconds after SIGTERM before SIGKILL     [15]
 #   VPN_DAEMON_DRY_RUN  1 = do everything except launching snx-rs
 #
 # Logs go to stderr (the journal under systemd); stdout is never used for logs. Codes and passwords are never
@@ -71,7 +73,7 @@ ENV_OVERRIDABLE=(
     VPN_TOTP_URL VPN_TOTP_TOKEN VPN_TOTP_ACCOUNT VPN_TOTP_MAX_AGE VPN_PASSWORD VPN_PASSWORD_FACTOR
     VPN_POLL_INTERVAL VPN_RETRY_DELAY VPN_NOTIFY VPN_NOTIFY_REPEAT
     VPN_HEALTH_DNS VPN_HEALTH_NAME VPN_HEALTH_INTERVAL VPN_HEALTH_TIMEOUT
-    VPN_HEALTH_FAILURES VPN_HEALTH_GRACE
+    VPN_HEALTH_FAILURES VPN_HEALTH_GRACE VPN_HEALTH_KILL_WAIT
 )
 
 log() { printf '%s vpn-daemon: %s\n' "$(date +'%F %T')" "$*" >&2; }
@@ -118,6 +120,7 @@ load_config() {
     VPN_HEALTH_TIMEOUT="${VPN_HEALTH_TIMEOUT:-5}"
     VPN_HEALTH_FAILURES="${VPN_HEALTH_FAILURES:-3}"
     VPN_HEALTH_GRACE="${VPN_HEALTH_GRACE:-30}"
+    VPN_HEALTH_KILL_WAIT="${VPN_HEALTH_KILL_WAIT:-15}"
 }
 
 validate_config() {
@@ -239,6 +242,31 @@ except OSError:
 ' 2>/dev/null
 }
 
+# Take down the snx-rs session with pid $1. snx-rs runs as root via sudo, so
+# a plain kill would be refused; sudoers allows exactly these two pkill forms.
+# SIGTERM lets snx-rs log out and tear the routes down; if it is still there
+# after VPN_HEALTH_KILL_WAIT seconds it is stuck, and SIGKILL it is — the main
+# loop only reconnects once the process is gone, so a hung snx-rs would
+# otherwise keep the tunnel dead forever.
+kill_tunnel() {
+    local pid="$1" waited=0
+    if ! sudo -n pkill -TERM -x snx-rs 2>/dev/null; then
+        log "warning: could not signal snx-rs (sudo -n refused), tunnel stays down"
+        return 1
+    fi
+    while [ "$(pgrep -x -o snx-rs 2>/dev/null)" = "$pid" ]; do
+        if [ "$waited" -ge "$VPN_HEALTH_KILL_WAIT" ]; then
+            log "snx-rs (pid $pid) ignored SIGTERM for ${waited}s, sending SIGKILL"
+            sudo -n pkill -KILL -x snx-rs 2>/dev/null \
+                || log "warning: could not SIGKILL snx-rs (sudo -n refused), tunnel stays down"
+            return 1
+        fi
+        pause 1
+        waited=$(( waited + 1 ))
+    done
+    return 0
+}
+
 # Watchdog for one tunnel session; runs in the background next to snx-rs.
 # Ends either by killing snx-rs (the main loop then reconnects, exactly like
 # `vpnctl reconnect`) or quietly, once the session it belongs to is over.
@@ -266,9 +294,7 @@ health_watch() {
                 [ "$(pgrep -x -o snx-rs 2>/dev/null)" = "$target_pid" ] || return 0
                 log "tunnel stopped passing traffic, killing snx-rs (pid $target_pid) to force a reconnect"
                 notify "Туннель перестал отвечать — переподключаюсь." critical
-                # snx-rs runs as root via sudo, so a plain kill would be refused.
-                sudo -n pkill -TERM -x snx-rs 2>/dev/null \
-                    || log "warning: could not signal snx-rs (sudo -n refused), tunnel stays down"
+                kill_tunnel "$target_pid"
                 return 0
             fi
         fi
