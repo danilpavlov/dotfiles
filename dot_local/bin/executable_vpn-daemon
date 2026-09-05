@@ -50,7 +50,7 @@
 #   VPN_HEALTH_DNS      comma-separated DNS servers inside the perimeter to
 #                       probe; empty (the default) disables the health check
 #   VPN_HEALTH_NAME     name to ask them about          [the gateway host]
-#   VPN_HEALTH_INTERVAL seconds between probes                    [60]
+#   VPN_HEALTH_INTERVAL seconds between probes                    [30]
 #   VPN_HEALTH_TIMEOUT  seconds to wait for a reply                [5]
 #   VPN_HEALTH_FAILURES failed rounds in a row before reconnecting [3]
 #   VPN_HEALTH_GRACE    seconds to let a fresh tunnel settle      [30]
@@ -116,7 +116,7 @@ load_config() {
     VPN_HEALTH_DNS="${VPN_HEALTH_DNS:-}"
     VPN_HEALTH_NAME="${VPN_HEALTH_NAME:-${VPN_SERVER:-}}"
     VPN_HEALTH_NAME="${VPN_HEALTH_NAME%%:*}"
-    VPN_HEALTH_INTERVAL="${VPN_HEALTH_INTERVAL:-60}"
+    VPN_HEALTH_INTERVAL="${VPN_HEALTH_INTERVAL:-30}"
     VPN_HEALTH_TIMEOUT="${VPN_HEALTH_TIMEOUT:-5}"
     VPN_HEALTH_FAILURES="${VPN_HEALTH_FAILURES:-3}"
     VPN_HEALTH_GRACE="${VPN_HEALTH_GRACE:-30}"

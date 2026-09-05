@@ -55,7 +55,9 @@ SNX_BIN=""
 #VPN_HEALTH_NAME=""
 # Seconds between rounds, per-query timeout, silent rounds before reconnecting,
 # and how long a freshly built tunnel gets to settle before the first round.
-#VPN_HEALTH_INTERVAL="60"
+# With the defaults a dead tunnel is noticed within about 1.5 minutes while a
+# single lost round (they do happen) is ignored.
+#VPN_HEALTH_INTERVAL="30"
 #VPN_HEALTH_TIMEOUT="5"
 #VPN_HEALTH_FAILURES="3"
 #VPN_HEALTH_GRACE="30"
