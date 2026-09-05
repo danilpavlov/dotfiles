@@ -7,3 +7,4 @@ docs/
 {{ if ne .chezmoi.os "linux" -}}
 .config/hypr
 {{- end }}
+tests/
