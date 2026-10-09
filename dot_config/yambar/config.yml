@@ -1,0 +1,103 @@
+bar:
+  monitor: DP-2
+  location: top
+  layer: top
+  height: 28
+  background: 060606d9
+  foreground: d0d0d0ff
+  font: "Hack Nerd Font:pixelsize=16,monospace:pixelsize=16"
+  spacing: 4
+
+  left:
+    - script:
+        path: ~/.config/yambar/scripts/workspaces.sh
+        content:
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show1 && active1":
+                  string: {text: "1", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 1"}
+                show1:
+                  string: {text: "1", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 1"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show2 && active2":
+                  string: {text: "2", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 2"}
+                show2:
+                  string: {text: "2", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 2"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show3 && active3":
+                  string: {text: "3", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 3"}
+                show3:
+                  string: {text: "3", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 3"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show4 && active4":
+                  string: {text: "4", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 4"}
+                show4:
+                  string: {text: "4", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 4"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show5 && active5":
+                  string: {text: "5", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 5"}
+                show5:
+                  string: {text: "5", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 5"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show6 && active6":
+                  string: {text: "6", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 6"}
+                show6:
+                  string: {text: "6", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 6"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show7 && active7":
+                  string: {text: "7", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 7"}
+                show7:
+                  string: {text: "7", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 7"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show8 && active8":
+                  string: {text: "8", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 8"}
+                show8:
+                  string: {text: "8", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 8"}
+          - map:
+              default: {empty: {}}
+              conditions:
+                "show9 && active9":
+                  string: {text: "9", margin: 8, foreground: ffffffff, on-click: "hyprctl dispatch workspace 9"}
+                show9:
+                  string: {text: "9", margin: 8, foreground: "555555ff", on-click: "hyprctl dispatch workspace 9"}
+
+  center:
+    - clock:
+        time-format: "%H:%M"
+        content:
+          string: {text: "{time}", foreground: ffffffff}
+
+  right:
+    - script:
+        path: ~/.config/yambar/scripts/bluetooth.sh
+        poll-interval: 5000
+        content:
+          string: {text: "{bt}", margin: 3, foreground: "888888ff", on-click: "blueman-manager"}
+    - script:
+        path: ~/.config/yambar/scripts/wifi.sh
+        poll-interval: 5000
+        content:
+          string: {text: "{wifi}", margin: 3, foreground: "888888ff", on-click: "ghostty -e nmtui"}
+    - pulse:
+        content:
+          map:
+            conditions:
+              sink_muted:
+                string: {text: "mute", margin: 3, foreground: "888888ff", on-click: pavucontrol}
+              ~sink_muted:
+                string: {text: "{sink_percent}", margin: 3, foreground: "888888ff", on-click: pavucontrol}

@@ -6,4 +6,6 @@ docs/
 
 {{ if ne .chezmoi.os "linux" -}}
 .config/hypr
+.config/yambar
+.local/bin/screenshot.sh
 {{- end }}

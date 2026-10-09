@@ -17,3 +17,12 @@ pyenv
 k9s
 zsh-autosuggestions
 zsh-syntax-highlighting
+
+# Hyprland desktop (Linux only; the Debian list stays headless)
+hyprland
+hyprpaper
+swaync
+rofi
+grim
+slurp
+wl-clipboard
