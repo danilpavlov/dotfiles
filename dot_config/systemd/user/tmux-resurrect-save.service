@@ -1,0 +1,15 @@
+[Unit]
+Description=Save tmux sessions (tmux-resurrect) on poweroff/reboot/logout
+Documentation=https://github.com/tmux-plugins/tmux-resurrect
+
+# Юнит стартует при логине и просто висит активным: вся работа в ExecStop,
+# который systemd выполняет при остановке user-менеджера.
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/true
+ExecStop=%h/.config/tmux/scripts/resurrect-save-on-stop.sh
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target
