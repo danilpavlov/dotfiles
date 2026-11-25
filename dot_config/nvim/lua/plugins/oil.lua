@@ -44,6 +44,7 @@ return {
   },
   keys = {
     { "-", "<cmd>Oil<cr>", desc = "Open parent directory (oil)" },
+    { "<leader>.", "<cmd>Oil<cr>", desc = "Open oil" },
     { "<leader>cw", function() require("oil").open(vim.uv.cwd()) end, desc = "Open oil in cwd" },
   },
 }
