@@ -3,9 +3,16 @@ LICENSE
 assets/
 packages/
 docs/
+tests/
 
 {{ if ne .chezmoi.os "linux" -}}
 .config/hypr
+.config/gtk-3.0
+.config/rofi
+.config/swaync
 .config/yambar
+.local/bin/bb-desktop
+.local/bin/control-panel.sh
 .local/bin/screenshot.sh
+.local/share/salaralo-theme/hyprland.lua
 {{- end }}

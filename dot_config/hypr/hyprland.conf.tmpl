@@ -33,9 +33,21 @@ windowrule = match:class zen, workspace 2
 windowrule = match:class obsidian, workspace 3
 windowrule = match:class org.telegram.desktop, workspace 4
 
+# Workspaces 1-4: fullscreen
+windowrule = match:class com.mitchellh.ghostty, fullscreen on
+windowrule = match:class zen, fullscreen on
+windowrule = match:class obsidian, fullscreen on
+windowrule = match:class org.telegram.desktop, fullscreen on
+
+# Workspace 5: control panel (tiled, not fullscreen)
+windowrule = match:class ^local.panel.bluetooth$, workspace 5
+windowrule = match:class ^local.panel.audio$, workspace 5
+windowrule = match:class ^local.panel.wifi$, workspace 5
+
 # Startup: terminal on workspace 1, browser on workspace 2, obsidian on workspace 3, telegram on workspace 4
-exec-once = ~/.config/hypr/set-wallpaper.sh
-exec-once = ~/.local/bin/yambar
+# Export Wayland env to systemd/dbus so xdg-desktop-portal-hyprland can do screen sharing
+exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec-once = ~/.config/hypr/set-wallpaper.sh --restore
 exec-once = swaync
 exec-once = [workspace 1 silent] $terminal -e ~/.local/bin/home-tmux.sh
 exec-once = [workspace 2 silent] $browser
@@ -61,6 +73,7 @@ bind = $mainMod, 2, workspace, 2
 bind = $mainMod, 3, workspace, 3
 bind = $mainMod, 4, workspace, 4
 bind = $mainMod, 5, workspace, 5
+bind = $mainMod, S, exec, ~/.local/bin/control-panel.sh
 bind = $mainMod, C, killactive,
 bind = $mainMod, M, exec, command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit
 bind = $mainMod, E, exec, $fileManager

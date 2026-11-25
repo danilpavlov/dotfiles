@@ -1,6 +1,11 @@
 #!/bin/sh
 # Start hyprpaper and apply a random wallpaper via IPC.
 # Runs at startup (exec-once) and on demand from the $mainMod+0 keybind.
+# Usage: set-wallpaper.sh [IMAGE]    (no argument = random from WALLPAPER_DIR)
+#        set-wallpaper.sh --restore  (last applied wallpaper; random if none)
+#
+# Every applied wallpaper is remembered in $STATE_FILE, and Hyprland starts
+# this with --restore, so the wallpaper survives reboots until changed.
 #
 # The config `wallpaper=` line is unreliable on this hyprpaper version, so we
 # set it explicitly once the daemon's IPC socket is up. The `wallpaper` command
@@ -10,31 +15,49 @@
 # `unload`, so re-setting the wallpaper in a live daemon would leak the
 # decoded image of every wallpaper seen so far (~78 MB for the 6000x3274 one).
 
-WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/github/wallpapers}"
+STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/hypr/wallpaper"
 
-ALL=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
-        \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \))
-
-if [ -z "$ALL" ]; then
-    echo "set-wallpaper: no images found in $WALLPAPER_DIR" >&2
-    exit 1
+if [ "${1:-}" = "--restore" ]; then
+    # Reuse the saved image; fall back to a random one if it is gone.
+    SAVED=$(cat "$STATE_FILE" 2>/dev/null)
+    if [ -f "$SAVED" ]; then set -- "$SAVED"; else set --; fi
 fi
 
-# Drop the wallpaper that is already up, so the keybind always visibly changes
-# something. At startup nothing is active yet and this filters nothing out.
-CURRENT=$(hyprctl hyprpaper listactive 2>/dev/null | sed -n 's/^[^:]*: //p' | head -n 1)
-CANDIDATES=$(printf '%s\n' "$ALL" | grep -vxF "$CURRENT")
-[ -z "$CANDIDATES" ] && CANDIDATES=$ALL
+if [ -n "${1:-}" ]; then
+    # Explicit file: use it as-is instead of picking a random one.
+    WALL=$(realpath -- "$1" 2>/dev/null)
+    if [ ! -f "$WALL" ]; then
+        echo "set-wallpaper: not a file: $1" >&2
+        exit 1
+    fi
+else
+    WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/github/wallpapers}"
 
-WALL=$(printf '%s\n' "$CANDIDATES" | shuf -n 1)
+    ALL=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+            \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \))
+
+    if [ -z "$ALL" ]; then
+        echo "set-wallpaper: no images found in $WALLPAPER_DIR" >&2
+        exit 1
+    fi
+
+    # Drop the wallpaper that is already up, so the keybind always visibly changes
+    # something. At startup nothing is active yet and this filters nothing out.
+    CURRENT=$(hyprctl hyprpaper listactive 2>/dev/null | sed -n 's/^[^:]*: //p' | head -n 1)
+    CANDIDATES=$(printf '%s\n' "$ALL" | grep -vxF "$CURRENT")
+    [ -z "$CANDIDATES" ] && CANDIDATES=$ALL
+
+    WALL=$(printf '%s\n' "$CANDIDATES" | shuf -n 1)
+fi
 
 pkill -x hyprpaper 2>/dev/null
-hyprpaper &
+hyprpaper >/dev/null 2>&1 &
 
 # Wait for the IPC socket to respond, then set the wallpaper on all monitors.
 for i in $(seq 1 20); do
     if hyprctl hyprpaper listactive >/dev/null 2>&1; then
-        hyprctl hyprpaper wallpaper ",$WALL" >/dev/null 2>&1
+        hyprctl hyprpaper wallpaper ",$WALL" >/dev/null 2>&1 &&
+            mkdir -p "${STATE_FILE%/*}" && printf '%s\n' "$WALL" >"$STATE_FILE"
         break
     fi
     sleep 0.25
