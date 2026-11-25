@@ -1,0 +1,46 @@
+;; ricemood config
+;; Tags default to ^r ... ^ — the ini keys documented as tag_start/tag_end are
+;; read as start_tag/end_tag by the code, so leave them unset and use defaults.
+
+;; image scaled down x times before sampling; 1 = original
+quality = 1
+
+;; hyprpaper has no static config here, so ask the running daemon over IPC
+imagefile_script = getmybg
+
+[ghostty]
+filename = ghostty.conf
+realfilepath = {{ .chezmoi.homeDir }}/.config/ghostty/themes/ricemood
+
+[zsh]
+filename = zsh-theme.zsh
+realfilepath = {{ .chezmoi.homeDir }}/.oh-my-zsh/custom/themes/ricemood.zsh-theme
+
+[nvim]
+filename = nvim-colors.lua
+realfilepath = {{ .chezmoi.homeDir }}/.config/nvim/colors/ricemood.lua
+
+[obsidian]
+filename = obsidian.css
+realfilepath = {{ .chezmoi.homeDir }}/obsidian/.obsidian/snippets/ricemood.css
+
+;; Shell code blocks drawn like the Ghostty window. Works under any theme,
+;; unlike [obsidian], which only recolours Vague. Enable it once in Obsidian:
+;; Settings -> Appearance -> CSS snippets -> ricemood-terminal.
+[obsidian-terminal]
+filename = obsidian-terminal.css
+realfilepath = {{ .chezmoi.homeDir }}/obsidian/.obsidian/snippets/ricemood-terminal.css
+
+[k9s]
+filename = k9s-skin.yaml
+realfilepath = {{ .chezmoi.homeDir }}/.config/k9s/skins/ricemood.yaml
+
+[posting]
+filename = posting-theme.yaml
+realfilepath = {{ .chezmoi.homeDir }}/.local/share/posting/themes/ricemood.yaml
+
+;; Claude Code custom theme; pick it once with /theme -> ricemood.
+;; Claude Code watches ~/.claude/themes and repaints running sessions.
+[claude]
+filename = claude-theme.json
+realfilepath = {{ .chezmoi.homeDir }}/.claude/themes/ricemood.json

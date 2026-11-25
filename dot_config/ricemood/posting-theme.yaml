@@ -1,0 +1,88 @@
+# ricemood template -> ~/.local/share/posting/themes/ricemood.yaml
+# Regenerate:  ricemood -a     (edit this file, not the generated one)
+#
+# Same palette and semantics as the nvim / ghostty / k9s themes: cool
+# blue-grey neutrals from the sky, sand kept as the one warm accent,
+# terracotta/sage/violet picked out of the figures and clouds.
+# `background` has to stay a real colour (Textual derives its shades from it)
+# and has to equal the ghostty background: ~/.config/posting/posting-transparent
+# leaves every cell of exactly that colour to the terminal, which is how the
+# ghostty background-opacity shows through, like nvim's transparent mode.
+#
+# @V vibrant   @LV light vibrant   @DV dark vibrant
+# @M muted     @LM light muted     @DM dark muted
+#
+# Hex values must stay quoted: a bare #RRGGBB is a YAML comment.
+# The palette keys below are not posting settings; posting ignores them and
+# they only exist to be aliased. Compound styles ("bold X on Y") cannot use
+# aliases, so those repeat the expression inline.
+
+# neutrals
+bg: &bg "^r@LM>ro(28)>de(0.55)>l(8)^"
+bg_alt: &bg_alt "^r@LM>ro(28)>de(0.5)>l(12)^"
+bg_high: &bg_high "^r@LM>ro(28)>de(0.48)>l(16)^"
+gutter: &gutter "^r@LM>ro(28)>de(0.45)>l(34)^"
+fg_dim: &fg_dim "^r@LM>ro(28)>de(0.4)>l(62)^"
+
+# accents
+sand: &sand "^r@V>sa(0.2)>l(66)^"
+sand_hi: &sand_hi "^r@V>sa(0.25)>l(77)^"
+terra: &terra "^r@V>ro(-24)>sa(0.35)>l(62)^"
+sage: &sage "^r@V>ro(88)>de(0.42)>l(60)^"
+blue: &blue "^r@LM>ro(32)>sa(0.35)>l(68)^"
+blue_dim: &blue_dim "^r@LM>ro(32)>sa(0.3)>l(56)^"
+violet: &violet "^r@LM>ro(74)>de(0.3)>l(72)^"
+cyan: &cyan "^r@LM>de(0.12)>l(70)^"
+
+name: ricemood
+dark: true
+
+# blue carries the chrome (header, scrollbars, buttons), like the k9s titles;
+# sand marks focus and the active tab, like the k9s command prompt.
+primary: *blue
+secondary: *violet
+accent: *sand
+background: *bg
+# nvim's float background and cursorline, in that order
+surface: *bg_alt
+panel: *bg_high
+warning: *sand_hi
+error: *terra
+success: *sage
+
+# nvim: LineNr, Cursor, CursorLine, CursorLineNr, MatchParen, Visual
+text_area:
+  gutter: *gutter
+  cursor: "^r@LM>ro(28)>de(0.55)>l(8)^ on ^r@LM>ro(28)>de(0.62)>l(87)^"
+  cursor_line: "on ^r@LM>ro(28)>de(0.48)>l(16)^"
+  cursor_line_gutter: "bold ^r@V>sa(0.2)>l(66)^ on ^r@LM>ro(28)>de(0.48)>l(16)^"
+  matched_bracket: "bold ^r@V>sa(0.25)>l(77)^"
+  selection: "on ^r@LM>ro(28)>de(0.32)>l(26)^"
+
+# @property blue, strings sage, numbers and constants terra, as in nvim
+syntax:
+  json_key: *blue
+  json_string: *sage
+  json_number: *terra
+  json_boolean: *terra
+  json_null: "italic ^r@V>ro(-24)>sa(0.35)>l(62)^"
+
+url:
+  base: *blue
+  protocol: *violet
+  separator: *fg_dim
+
+# $VARS in the URL bar and inputs: cyan like nvim's macros, terra when the
+# name does not resolve
+variable:
+  resolved: *cyan
+  unresolved: *terra
+
+method:
+  get: *blue
+  post: *sage
+  put: *sand
+  delete: *terra
+  patch: *cyan
+  options: *violet
+  head: *blue_dim

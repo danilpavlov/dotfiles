@@ -1,0 +1,131 @@
+/* ricemood template -> ~/obsidian/.obsidian/snippets/ricemood-terminal.css
+ * Regenerate:  ricemood -a     (edit this file, not the generated one)
+ *
+ * Shell code blocks in reading view, drawn the way Ghostty draws the shell:
+ * colors, font and cell height from ghostty.conf, token colors from
+ * zsh-syntax-highlighting's defaults, prompt colors from zsh-theme.zsh. The
+ * expressions are copied from those templates, so all of them move together.
+ *
+ * Unlike obsidian.css this does not depend on the Vague theme: it sets the
+ * variables Obsidian's own code block rules read and out-specifies the token
+ * colors, so it rides on top of whatever theme is active.
+ *
+ * Reading view only. The editor does not put the fence language on a code
+ * block's lines, so there is nothing to hang a shell-only selector on.
+ *
+ * @V vibrant   @LV light vibrant   @DV dark vibrant
+ * @M muted     @LM light muted     @DM dark muted
+ */
+
+body .markdown-rendered pre:is(
+  .language-bash, .language-sh, .language-shell, .language-zsh,
+  .language-shell-session, .language-sh-session, .language-shellsession
+) {
+  /* ---- ghostty.conf ---------------------------------------------------- */
+  --term-background: ^r@LM>ro(28)>de(0.55)>l(8)^;
+  --term-foreground: ^r@LM>ro(28)>de(0.62)>l(87)^;
+  --term-selection-background: ^r@LM>ro(28)>de(0.32)>l(26)^;
+  --term-selection-foreground: ^r@LM>ro(28)>de(0.62)>l(92)^;
+  --term-green: ^r@V>ro(88)>de(0.52)>l(47)^;    /* palette 2 */
+  --term-yellow: ^r@V>sa(0.25)>l(62)^;          /* palette 3 */
+  --term-magenta: ^r@LM>ro(74)>de(0.42)>l(62)^; /* palette 5 */
+  --term-cyan: ^r@LM>l(60)^;                    /* palette 6 */
+
+  /* zsh-syntax-highlighting paints comments fg=black,bold: palette 0, all but
+   * invisible on this background. Fine for a line being typed, not for notes
+   * where the comment is the explanation, so take nvim's comment color. */
+  --term-comment: ^r@LM>ro(28)>de(0.42)>l(47)^;
+
+  /* ---- zsh-theme.zsh --------------------------------------------------- */
+  --prompt-user-host: ^r@V>sa(0.2)>l(66)^;
+  --prompt-separator: ^r@LM>ro(28)>de(0.4)>l(42)^;
+  --prompt-dir: ^r@LM>ro(32)>sa(0.35)>l(68)^;
+  --prompt-symbol: ^r@LM>ro(28)>de(0.35)>l(58)^;
+
+  /* background-opacity is not carried over: behind the block is the note, not
+   * the wallpaper, so 0.90 would blend toward the wrong thing. */
+  background: var(--term-background);
+  --code-normal: var(--term-foreground);
+  --code-punctuation: var(--term-foreground);
+
+  /* font-family as ghostty.conf asks for it, then the face fontconfig hands
+   * Ghostty while that family is not installed (ghostty +show-face). */
+  --font-monospace: "JetBrainsMono Nerd Font", "Noto Sans Mono", "Symbols Nerd Font", monospace;
+  font-family: var(--font-monospace);
+  font-size: 13pt;
+  /* The block carries the size; keep themes from scaling the code inside it.
+   * --font-size-code is Blue Topaz's knob for what Obsidian calls --code-size. */
+  --code-size: 1em;
+  --font-size-code: 1em;
+  /* Noto Sans Mono's own 1.362 plus adjust-cell-height = 10% */
+  line-height: 1.5;
+
+  &::selection,
+  & ::selection {
+    background: var(--term-selection-background);
+    color: var(--term-selection-foreground);
+  }
+
+  /* ---- zsh-syntax-highlighting, in the names Prism gives the same things - */
+  /* default, and every style left at none: options, assignments, separators,
+   * unquoted parameters */
+  .token {
+    color: inherit;
+  }
+
+  /* arg0 */
+  :is(.token.function, .token.builtin, .token.function-name) {
+    color: var(--term-green);
+  }
+
+  /* reserved-word; single-, double- and dollar-quoted-argument */
+  :is(.token.keyword, .token.string) {
+    color: var(--term-yellow);
+  }
+
+  /* dollar-double-quoted-argument, back-double-quoted-argument */
+  .token.string > :is(.token.variable, .token.environment, .token.entity) {
+    color: var(--term-cyan);
+  }
+
+  /* redirection. Prism only tells one from a pipe when it carries an fd, so a
+   * bare > stays unpainted like commandseparator. */
+  :is(.token.file-descriptor, .token.operator:has(.token.file-descriptor)) {
+    color: var(--term-yellow);
+  }
+
+  /* command-substitution, then its delimiters (and back-quoted-argument's) */
+  .token.variable:has(> .token.variable) {
+    color: var(--term-foreground);
+  }
+  .token.variable > .token.variable {
+    color: var(--term-magenta);
+  }
+
+  :is(.token.comment, .token.shebang) {
+    color: var(--term-comment);
+  }
+
+  /* Prism aliases these to "important", which themes embolden. */
+  :is(.token.file-descriptor, .token.shebang) {
+    font-weight: inherit !important;
+  }
+
+  /* ---- the prompt, where Prism can find one (shell-session blocks) ------ */
+  .token.info {
+    color: var(--prompt-separator);
+    --code-punctuation: var(--prompt-separator);
+  }
+  .token.user {
+    color: var(--prompt-user-host);
+    font-weight: bold;
+  }
+  .token.path {
+    color: var(--prompt-dir);
+    font-weight: bold;
+  }
+  .token.shell-symbol {
+    color: var(--prompt-symbol);
+    font-weight: bold;
+  }
+}

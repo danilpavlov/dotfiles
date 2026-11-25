@@ -1,0 +1,84 @@
+#!{{ .chezmoi.homeDir }}/.local/share/uv/tools/posting/bin/python
+"""posting, with the theme background left to the terminal.
+
+A Textual theme needs a real `background` colour (its shades and blends are
+derived from it), so a posting theme cannot say "default" the way nvim's NONE
+or the k9s skin's `default` do. This launcher keeps the theme as it is and, as
+the last step of rendering, drops the background from every cell that ended
+up exactly that colour, so ghostty's background-opacity shows through.
+Surfaces, the cursor line and selections keep their own colours, like
+CursorLine and Visual do in nvim.
+
+Only the themes in TRANSPARENT_THEMES are touched: their `background` has to
+be the terminal's own background, or text would sit on the wrong colour.
+
+Run through the `posting` alias in ~/.config/zsh/aliases.zsh; arguments are
+passed on unchanged. If posting's internals move, this falls back to the
+stock app with a solid background.
+"""
+
+import sys
+from functools import lru_cache
+
+import posting.__main__ as posting_main
+
+TRANSPARENT_THEMES = {"ricemood"}
+
+
+def make_transparent() -> None:
+    from rich.segment import Segment
+    from rich.style import Style
+    from textual.color import Color
+    from textual.filter import LineFilter
+
+    class DefaultBackground(LineFilter):
+        """Leave cells of one background colour to the terminal default."""
+
+        def __init__(self, color: str) -> None:
+            super().__init__()
+            self._triplet = Color.parse(color).rich_color.triplet
+
+        @lru_cache(1024)
+        def without_background(self, style: Style) -> Style:
+            bgcolor = style.bgcolor
+            if bgcolor is None or bgcolor.triplet != self._triplet:
+                return style
+            stripped = style.without_color + Style.from_color(style.color)
+            # without_color also drops the meta, which carries click targets
+            if style.meta:
+                stripped += Style.from_meta(style.meta)
+            return stripped
+
+        def apply(self, segments: list[Segment], background: Color) -> list[Segment]:
+            without_background = self.without_background
+            return [
+                Segment(
+                    text,
+                    None if style is None else without_background(style),
+                    control,
+                )
+                for text, style, control in segments
+            ]
+
+    default_background = lru_cache(8)(DefaultBackground)
+
+    class Posting(posting_main.Posting):
+        def get_line_filters(self):
+            filters = super().get_line_filters()
+            theme = self.current_theme
+            if theme.name in TRANSPARENT_THEMES and theme.background:
+                # last, so it sees the colours the other filters settled on
+                return [*filters, default_background(theme.background)]
+            return filters
+
+    # make_posting() looks the class up in its module at call time
+    posting_main.Posting = Posting
+
+
+try:
+    make_transparent()
+except Exception as error:
+    print(f"posting-transparent: running with a solid background: {error!r}", file=sys.stderr)
+
+sys.argv[0] = "posting"
+sys.exit(posting_main.cli())
