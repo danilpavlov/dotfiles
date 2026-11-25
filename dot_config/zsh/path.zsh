@@ -10,3 +10,12 @@ fi
 
 # .local/bin/env (uv etc.)
 [ -r "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+
+# CUDA Toolkit: make nvcc available in interactive, non-login shells too.
+if [ -d /opt/cuda/bin ]; then
+  export CUDA_PATH=/opt/cuda
+  case ":$PATH:" in
+    *:/opt/cuda/bin:*) ;;
+    *) export PATH="$CUDA_PATH/bin:$PATH" ;;
+  esac
+fi

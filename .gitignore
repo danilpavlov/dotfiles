@@ -10,3 +10,6 @@ __pycache__/
 
 # Per-machine secrets (real file is local, example is in repo)
 dot_config/zsh/work.zsh
+dot_config/zsh/spotify.zsh
+dot_config/zsh/11labs.zsh
+.chezmoidata/local.yaml

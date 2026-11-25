@@ -1,0 +1,9 @@
+. "$HOME/.cargo/env"
+
+# ~/.local/bin нужен и GUI-сессии: SDDM стартует Hyprland через неинтерактивный
+# `zsh --login`, который читает .zshenv, но не .zshrc — иначе rofi/drun не находит
+# программы из ~/.local/bin (blender и т.п.)
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
