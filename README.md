@@ -37,6 +37,17 @@ $EDITOR ~/.config/snx-rs/vpn.conf
 
 Open a new terminal and you're done.
 
+## Hyprland on Arch
+
+From the root of an existing `master` checkout, pull the latest dotfiles and apply them with chezmoi. This also runs the Arch package bootstrap.
+
+```sh
+git pull --ff-only
+chezmoi --source "$PWD" apply
+```
+
+Chezmoi renders the keybindings into `~/.config/hypr/hyprland.lua`. **Super+S** runs `~/.local/bin/control-panel.sh` to open Bluetooth (`bluetui`), audio (`wiremix`), and Wi-Fi (`nmtui`) on the `controls` workspace. [Keybinding source](dot_config/hypr/hyprland.lua.tmpl) · [Control panel script](dot_local/bin/executable_control-panel.sh)
+
 ## VPN (snx-rs)
 
 The `~/.local/bin/vpn` launcher starts the [snx-rs](https://github.com/ancwrd1/snx-rs)
