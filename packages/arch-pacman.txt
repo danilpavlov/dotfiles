@@ -26,3 +26,10 @@ rofi
 grim
 slurp
 wl-clipboard
+
+# Super+S control panel
+ghostty
+python
+bluetui
+wiremix
+networkmanager
