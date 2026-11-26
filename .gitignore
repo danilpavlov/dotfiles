@@ -13,3 +13,5 @@ dot_config/zsh/work.zsh
 dot_config/zsh/spotify.zsh
 dot_config/zsh/11labs.zsh
 .chezmoidata/local.yaml
+dot_config/snx-rs/vpn.conf
+dot_config/snx-rs/vpn-daemon.env

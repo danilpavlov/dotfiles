@@ -1,0 +1,32 @@
+# Debian / Raspberry Pi OS packages (apt). Minimal headless CLI set.
+# One per line. Comments and blanks OK.
+#
+# Notes on naming/availability vs the Arch/Brew lists:
+#   - fd  is the `fd-find` package (binary `fdfind`) -> symlinked to `fd`
+#   - bat is the `bat` package      (binary `batcat`) -> symlinked to `bat`
+#   - eza is NOT in Debian repos    -> installed from the gierens apt repo
+#   - neovim is NOT installed here  -> Debian's build is too old for LazyVim
+#                                      (needs >= 0.11.2); installed from the
+#                                      official static tarball by the package script
+#   - cbonsai / k9s / pyenv         -> not packaged; skipped on headless
+#   - prometheus-node-exporter      -> ships a systemd service on :9100,
+#                                      hwmon collector on (Pi temp works OOTB)
+
+build-essential
+pkg-config
+curl
+git
+zsh
+tmux
+fzf
+fd-find
+bat
+btop
+htop
+ripgrep
+thefuck
+zsh-autosuggestions
+zsh-syntax-highlighting
+
+# observability — Prometheus node exporter (metrics on :9100 via systemd)
+prometheus-node-exporter

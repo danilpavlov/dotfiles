@@ -1,0 +1,55 @@
+#!/bin/sh
+# Build & install the snx-rs VPN client (CLI only) from source.
+# Runs on Linux; needed on machines without a packaged snx-rs (e.g. Raspberry
+# Pi / ARM). The GTK/WebKit GUI is skipped — headless only.
+set -eu
+
+{{ if eq .chezmoi.os "linux" -}}
+SNX_DIR="$HOME/github/snx-rs"
+RELEASE_BIN="$SNX_DIR/target/release/snx-rs"
+
+# Already on PATH? Nothing to do.
+if command -v snx-rs >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Built previously but not on PATH — just expose it.
+if [ -x "$RELEASE_BIN" ]; then
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$RELEASE_BIN" "$HOME/.local/bin/snx-rs"
+  [ -x "$SNX_DIR/target/release/snxctl" ] && \
+    ln -sf "$SNX_DIR/target/release/snxctl" "$HOME/.local/bin/snxctl"
+  exit 0
+fi
+
+echo "Installing snx-rs from source (CLI only)..."
+
+# Build dependencies: C toolchain + OpenSSL + SQLite.
+if [ -r /etc/arch-release ]; then
+  sudo pacman -S --needed --noconfirm base-devel openssl sqlite pkgconf git
+elif [ -r /etc/debian_version ] || command -v apt-get >/dev/null 2>&1; then
+  sudo apt-get update
+  sudo apt-get install -y build-essential pkg-config libssl-dev libsqlite3-dev git
+fi
+
+# Rust toolchain (snx-rs needs Rust >= 1.88; rustup provides current stable).
+if ! command -v cargo >/dev/null 2>&1; then
+  curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh -s -- -y
+  . "$HOME/.cargo/env"
+fi
+
+# Fetch sources into the conventional ~/github layout.
+if [ ! -d "$SNX_DIR/.git" ]; then
+  mkdir -p "$(dirname "$SNX_DIR")"
+  git clone https://github.com/ancwrd1/snx-rs.git "$SNX_DIR"
+fi
+
+# Build just the CLI client + controller (no GUI on headless).
+( cd "$SNX_DIR" && cargo build --release -p snx-rs -p snxctl )
+
+mkdir -p "$HOME/.local/bin"
+ln -sf "$RELEASE_BIN" "$HOME/.local/bin/snx-rs"
+ln -sf "$SNX_DIR/target/release/snxctl" "$HOME/.local/bin/snxctl"
+
+echo "snx-rs installed at $RELEASE_BIN (symlinked into ~/.local/bin)."
+{{- end }}
