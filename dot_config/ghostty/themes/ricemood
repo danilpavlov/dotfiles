@@ -1,0 +1,49 @@
+# ricemood template -> ~/.config/ghostty/themes/ricemood
+# Regenerate:  ricemood -a
+#
+# Palette source: current wallpaper.
+# @V  vibrant      @LV light vibrant   @DV dark vibrant
+# @M  muted        @LM light muted     @DM dark muted
+
+# The neutrals ride on the sky, not the sand: @LM rotated off cyan toward blue
+# and heavily desaturated. Sand stays an accent (yellow, cursor), not the base.
+background = #121417
+foreground = #DADEE1
+
+cursor-color = #CDB998
+cursor-text = #121417
+
+selection-background = #35424F
+selection-foreground = #E8EBED
+
+# black
+palette = 0=#2B333B
+palette = 8=#506072
+
+# red - terracotta, the flag and the child's dress
+palette = 1=#C77761
+palette = 9=#D99D8C
+
+# green - the sea along the shoreline
+palette = 2=#648C67
+palette = 10=#8AB28E
+
+# yellow - the sand itself; saturated up so it reads gold rather than mud
+palette = 3=#C9A874
+palette = 11=#DCC6A2
+
+# blue - the dresses and parasols
+palette = 4=#5982BA
+palette = 12=#8FA8CC
+
+# magenta - the violet in the cloud shadows
+palette = 5=#978EAE
+palette = 13=#BAB3CC
+
+# cyan - open sky
+palette = 6=#7CB3B6
+palette = 14=#AACED0
+
+# white
+palette = 7=#C8CED5
+palette = 15=#F1F2F4

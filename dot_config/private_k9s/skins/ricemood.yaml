@@ -1,0 +1,163 @@
+# ricemood template -> ~/.config/k9s/skins/ricemood.yaml
+# Regenerate:  ricemood -a     (edit this file, not the generated one)
+#
+# Same palette and semantics as the nvim / ghostty / zsh themes: cool
+# blue-grey neutrals from the sky, sand kept as the one warm accent,
+# terracotta/sage/violet picked out of the figures and clouds.
+# Backgrounds are "default" so the ghostty background-opacity shows through,
+# like nvim's transparent mode.
+#
+# @V vibrant   @LV light vibrant   @DV dark vibrant
+# @M muted     @LM light muted     @DM dark muted
+#
+# Hex values must stay quoted: a bare #RRGGBB is a YAML comment.
+
+# neutrals
+bg: &bg "#121417"
+bg_high: &bg_high "#23292F"
+bg_sel: &bg_sel "#35424F"
+border: &border "#404C59"
+comment: &comment "#64778C"
+fg_dim: &fg_dim "#8D9EAF"
+fg: &fg "#DADEE1"
+fg_hi: &fg_hi "#F1F2F4"
+
+# accents
+sand: &sand "#CDB184"
+sand_hi: &sand_hi "#DECAAB"
+terra: &terra "#CC8470"
+sage: &sage "#84AE88"
+blue: &blue "#8EA8CD"
+blue_dim: &blue_dim "#6588B9"
+violet: &violet "#B1A9C6"
+cyan: &cyan "#9FC4C6"
+
+transparent: &transparent default
+
+k9s:
+  body:
+    fgColor: *fg
+    bgColor: *transparent
+    # sand, like the user@host in the zsh prompt
+    logoColor: *sand
+    logoColorMsg: *fg_dim
+    logoColorInfo: *sage
+    logoColorWarn: *sand_hi
+    logoColorError: *terra
+
+  prompt:
+    fgColor: *fg
+    bgColor: *transparent
+    # the zsh autosuggestion grey
+    suggestColor: *comment
+    border:
+      default: *blue
+      command: *sand
+
+  info:
+    sectionColor: *fg_dim
+    fgColor: *fg
+    k9sRevColor: *violet
+    cpuColor: *sage
+    memColor: *cyan
+
+  help:
+    fgColor: *fg_dim
+    bgColor: *transparent
+    sectionColor: *sand
+    keyColor: *violet
+    numKeyColor: *terra
+
+  dialog:
+    fgColor: *fg
+    bgColor: *transparent
+    buttonFgColor: *fg_dim
+    buttonBgColor: *bg_high
+    buttonFocusFgColor: *bg
+    buttonFocusBgColor: *sand
+    labelFgColor: *sand
+    fieldFgColor: *fg
+
+  frame:
+    border:
+      fgColor: *border
+      focusColor: *comment
+    menu:
+      fgColor: *fg_dim
+      keyColor: *violet
+      numKeyColor: *terra
+    crumbs:
+      fgColor: *bg
+      bgColor: *blue_dim
+      activeColor: *sand
+    # row colors in every table; newColor is the plain, healthy row.
+    # The cursor bar takes the row's color as its background, so these also
+    # set the cursor color: fg_dim keeps the bar for normal rows from glaring.
+    status:
+      newColor: *fg_dim
+      modifyColor: *blue
+      addColor: *sage
+      pendingColor: *sand
+      errorColor: *terra
+      highlightColor: *sand_hi
+      killColor: *violet
+      completedColor: *comment
+    title:
+      fgColor: *blue
+      bgColor: *transparent
+      highlightColor: *sand
+      # numbers are terra, strings are sage, as in nvim
+      counterColor: *terra
+      filterColor: *sage
+
+  views:
+    table:
+      fgColor: *fg
+      bgColor: *transparent
+      # k9s only uses cursorBgColor until the cursor first moves; after that
+      # the bar is the row's status color (see frame.status), so the text on
+      # it has to be dark to read on all of them.
+      cursorFgColor: *bg
+      cursorBgColor: *fg_dim
+      markColor: *sand_hi
+      header:
+        # brighter than the fg_dim rows so the header still stands apart
+        fgColor: *fg
+        bgColor: *transparent
+        sorterColor: *sand
+        selectedSortColumnColor: *sand
+    xray:
+      fgColor: *fg
+      bgColor: *transparent
+      cursorColor: *bg_sel
+      cursorTextColor: *fg_hi
+      graphicColor: *comment
+    charts:
+      bgColor: *transparent
+      dialBgColor: *transparent
+      chartBgColor: *transparent
+      defaultDialColors: [*sage, *terra]
+      defaultChartColors: [*sage, *terra]
+      resourceColors:
+        cpu: [*blue, *blue_dim]
+        mem: [*sand, *sand_hi]
+      focusFgColor: *fg_hi
+      focusBgColor: *bg_sel
+    # @property blue, delimiter fg_dim, string sage
+    yaml:
+      keyColor: *blue
+      colonColor: *fg_dim
+      valueColor: *sage
+    picker:
+      mainColor: *fg
+      focusColor: *sand
+      shortcutColor: *violet
+    logs:
+      fgColor: *fg
+      bgColor: *transparent
+      indicator:
+        fgColor: *fg_dim
+        bgColor: *transparent
+        toggleOnColor: *sage
+        toggleOffColor: *comment
+

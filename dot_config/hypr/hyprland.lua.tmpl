@@ -1,0 +1,84 @@
+-- Personal desktop configuration, migrated from hyprland.conf on 2026-11-12.
+-- Hyprland 0.57 reads Lua; the original hyprland.conf is kept for reference.
+
+local mainMod = "SUPER"
+local terminal = "ghostty"
+local fileManager = "dolphin"
+local menu = "command -v hyprlauncher >/dev/null 2>&1 && hyprlauncher || rofi -show drun"
+local browser = "zen-browser"
+local bb = "~/.local/bin/bb-desktop"
+local messenger = "Telegram"
+local notes = "obsidian obsidian://open?path={{ .chezmoi.homeDir }}/obsidian"
+
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+
+hl.config({
+    general = { gaps_in = 3, gaps_out = 0 },
+    input = { kb_layout = "us,ru", kb_options = "grp:alt_shift_toggle" },
+    animations = { enabled = true },
+    -- Keep workspace changes from switching the monitor between SDR and HDR.
+    render = { cm_auto_hdr = 0 },
+})
+hl.animation({ leaf = "workspaces", enabled = false })
+
+-- Keep the main apps fullscreen on their usual workspaces.
+for _, app in ipairs({
+    { name = "terminal", class = "com.mitchellh.ghostty", workspace = "1" },
+    { name = "browser", class = "zen", workspace = "2" },
+    { name = "bb", class = "bb-desktop", workspace = "3" },
+    { name = "notes", class = "(obsidian|md.obsidian.Obsidian)", workspace = "4" },
+    { name = "messenger", class = "org.telegram.desktop", workspace = "5" },
+}) do
+    hl.window_rule({
+        name = "home-" .. app.name,
+        match = { class = app.class },
+        workspace = app.workspace,
+        fullscreen = true,
+    })
+end
+
+-- Win+S opens the tiled bluetooth, audio, and wifi controls.
+for _, panel in ipairs({ "bluetooth", "audio", "wifi" }) do
+    hl.window_rule({
+        name = "panel-" .. panel,
+        match = { class = "^local.panel." .. panel .. "$" },
+        workspace = "name:controls",
+    })
+end
+
+-- This event runs once at login, not on configuration reloads.
+hl.on("hyprland.start", function()
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    hl.exec_cmd("~/.config/hypr/set-wallpaper.sh --restore")
+    hl.exec_cmd("swaync")
+    hl.exec_cmd(terminal .. " -e ~/.local/bin/home-tmux.sh", { workspace = "1 silent" })
+    hl.exec_cmd(browser, { workspace = "2 silent" })
+    hl.exec_cmd(bb, { workspace = "3 silent" })
+    hl.exec_cmd(notes, { workspace = "4 silent" })
+    hl.exec_cmd(messenger, { workspace = "5 silent" })
+end)
+
+hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
+hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("rofi -show drun"))
+hl.bind(mainMod .. " + SHIFT + 0", hl.dsp.exec_cmd("~/.config/hypr/set-wallpaper.sh"))
+
+-- Copy screenshots to the clipboard and save them to Pictures/Screenshots.
+hl.bind("CTRL + 4", hl.dsp.exec_cmd("~/.local/bin/screenshot.sh area"))
+hl.bind("CTRL + 5", hl.dsp.exec_cmd("~/.local/bin/screenshot.sh screen"))
+hl.bind(mainMod .. " + SHIFT + 5", hl.dsp.exec_cmd("~/.local/bin/screenshot.sh window"))
+hl.bind("Print", hl.dsp.exec_cmd("~/.local/bin/screenshot.sh area"))
+
+for workspace = 1, 10 do
+    local key = workspace % 10
+    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = workspace }))
+end
+hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("~/.local/bin/control-panel.sh"))
+hl.bind(mainMod .. " + C", hl.dsp.window.close())
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
+hl.bind(mainMod .. " + V", hl.dsp.window.fullscreen({ action = "toggle", mode = "fullscreen" }))
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
+
+-- SalarAlo appearance trial; undo with: salar-theme restore
+dofile(os.getenv("HOME") .. "/.local/share/salaralo-theme/hyprland.lua")

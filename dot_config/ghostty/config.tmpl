@@ -1,13 +1,14 @@
-# font-family = FiraCode Nerd Font
-# font-family = Iosevka Nerd Font
-# font-family = SFMono Nerd Font
+# font-family = firacode nerd font
+# font-family = iosevka nerd font
+# font-family = sfmono nerd font
 font-family = JetBrainsMono Nerd Font
-font-size = 13
-theme = vague
+font-size = 14
+theme = salaralo
 shell-integration-features = no-cursor,sudo,no-title
 cursor-style = block
-adjust-cell-height = 35%
-background-opacity = 0.90
+adjust-cell-height = 4
+adjust-cell-width = 1
+background-opacity = 1
 
 mouse-hide-while-typing = true
 mouse-scroll-multiplier = 2
@@ -54,7 +55,7 @@ keybind = cmd+s>l=goto_split:right
 keybind = cmd+s>z=toggle_split_zoom
 keybind = cmd+s>e=equalize_splits
 {{- else if eq .chezmoi.os "linux" -}}
-# keybindings (ctrl-based on Linux; mirror of macOS map)
+# keybindings (ctrl-based on linux; mirror of macos map)
 keybind = ctrl+s>r=reload_config
 keybind = ctrl+s>x=close_surface
 keybind = ctrl+s>n=new_window
@@ -92,3 +93,9 @@ keybind = ctrl+s>e=equalize_splits
 
 # other
 copy-on-select = clipboard
+{{ if eq .chezmoi.os "linux" }}
+# copy/paste like a gui app; interrupt (sigint) moves to ctrl+shift+c
+keybind = ctrl+c=copy_to_clipboard
+keybind = ctrl+v=paste_from_clipboard
+keybind = ctrl+shift+c=text:\x03
+{{- end }}

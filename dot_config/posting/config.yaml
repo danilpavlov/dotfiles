@@ -1,7 +1,10 @@
-theme: vague
+theme: ricemood
 layout: horizontal
 response:
   prettify_json: true
 heading:
   visible: true
   show_host: true
+focus:
+  on_startup: collection
+pager: nvim -R

@@ -1,0 +1,23 @@
+# SalarAlo Koda monochrome palette, translated from kitty/kitty.conf
+foreground = #a6a6a6
+background = #080808
+cursor-color = #c4c4c4
+cursor-text = #080808
+selection-foreground = #c4c4c4
+selection-background = #1a1a1a
+palette = 0=#000000
+palette = 1=#4a4a4a
+palette = 2=#5c5c5c
+palette = 3=#666666
+palette = 4=#707070
+palette = 5=#7a7a7a
+palette = 6=#848484
+palette = 7=#a6a6a6
+palette = 8=#3d3d3d
+palette = 9=#686868
+palette = 10=#a6a6a6
+palette = 11=#b0b0b0
+palette = 12=#b8b8b8
+palette = 13=#d0d0d0
+palette = 14=#c0c0c0
+palette = 15=#e0e0e0

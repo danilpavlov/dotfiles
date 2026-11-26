@@ -1,0 +1,68 @@
+/* ricemood template -> ~/obsidian/.obsidian/snippets/ricemood.css
+ * Regenerate:  ricemood -a     (edit this file, not the generated one)
+ *
+ * Recolours the Vague theme from the current wallpaper. Vague builds almost
+ * everything out of a small set of --vague-* primitives, so overriding those
+ * cascades through the whole theme; the handful of values Vague hardcodes are
+ * overridden explicitly below.
+ *
+ * Selector is body.theme-dark (0,1,1) rather than .theme-dark (0,1,0) so this
+ * wins regardless of snippet load order.
+ *
+ * @V vibrant   @LV light vibrant   @DV dark vibrant
+ * @M muted     @LM light muted     @DM dark muted
+ */
+
+body.theme-dark {
+  /* ---- Vague primitives ------------------------------------------------ */
+  /* neutrals: the sky, rotated toward blue and desaturated hard */
+  --vague-bg: ^r@LM>ro(28)>de(0.55)>l(8)^;
+  --vague-inactive-bg: ^r@LM>ro(28)>de(0.5)>l(12)^;
+  --vague-fg: ^r@LM>ro(28)>de(0.62)>l(87)^;
+  --vague-border: ^r@LM>ro(28)>de(0.4)>l(62)^;
+  --vague-line: ^r@LM>ro(28)>de(0.48)>l(16)^;
+  --vague-comment: ^r@LM>ro(28)>de(0.42)>l(47)^;
+  --vague-visual: ^r@LM>ro(28)>de(0.32)>l(26)^;
+  --vague-search: ^r@LM>ro(32)>de(0.32)>l(27)^;
+
+  /* accents, same roles as the nvim scheme */
+  --vague-func: ^r@V>sa(0.2)>l(66)^;          /* sand      */
+  --vague-string: ^r@V>ro(88)>de(0.42)>l(60)^;  /* sage      */
+  --vague-number: ^r@V>ro(-24)>sa(0.35)>l(62)^; /* terracotta */
+  --vague-constant: ^r@V>ro(-24)>sa(0.35)>l(62)^;
+  --vague-keyword: ^r@LM>ro(74)>de(0.3)>l(72)^; /* violet    */
+  --vague-type: ^r@LM>de(0.12)>l(70)^;          /* cyan      */
+  --vague-builtin: ^r@LM>de(0.12)>l(70)^;
+  --vague-property: ^r@LM>ro(32)>sa(0.35)>l(68)^; /* blue    */
+  --vague-parameter: ^r@LM>ro(32)>sa(0.35)>l(68)^;
+  --vague-operator: ^r@LM>ro(28)>de(0.4)>l(62)^;
+
+  /* semantic */
+  --vague-error: ^r@V>ro(-24)>sa(0.35)>l(62)^;
+  --vague-warning: ^r@V>sa(0.2)>l(66)^;
+  --vague-hint: ^r@LM>ro(32)>sa(0.35)>l(68)^;
+  --vague-plus: ^r@V>ro(88)>de(0.42)>l(60)^;
+  --vague-delta: ^r@LM>ro(32)>sa(0.35)>l(68)^;
+
+  /* ---- values Vague hardcodes instead of deriving ---------------------- */
+  --background-secondary-alt: ^r@LM>ro(28)>de(0.55)>l(5)^;
+  --background-modifier-error: ^r@V>ro(-24)>de(0.4)>l(17)^;
+  --background-modifier-error-hover: ^r@V>ro(-24)>de(0.35)>l(23)^;
+  /* Obsidian needs a bare comma triple here, so this one stays rgb(); the
+   * fractional channels ricemood emits are valid CSS Color 4 and render fine. */
+  --background-modifier-error-rgb: ^r@V>ro(-24)>sa(0.35)>l(62)#rgb^;
+  --text-muted: ^r@LM>ro(28)>de(0.4)>l(62)^;
+  --text-accent-hover: ^r@LM>ro(32)>sa(0.35)>l(78)^;
+  --link-color-hover: ^r@LM>ro(32)>sa(0.35)>l(78)^;
+  /* 8-digit hex rather than rgba(): ricemood's #rgb format emits floats */
+  --tag-background: ^r@LM>de(0.12)>l(70)^1a;
+  --table-row-alt-background: ^r@LM>ro(28)>de(0.5)>l(11)^;
+
+  /* ---- headings: sand at the top cooling into the sky ------------------ */
+  --h1-color: ^r@V>sa(0.25)>l(72)^;
+  --h2-color: ^r@V>sa(0.2)>l(66)^;
+  --h3-color: ^r@LM>ro(74)>de(0.3)>l(72)^;
+  --h4-color: ^r@LM>ro(32)>sa(0.35)>l(68)^;
+  --h5-color: ^r@LM>de(0.12)>l(70)^;
+  --h6-color: ^r@LM>ro(28)>de(0.4)>l(62)^;
+}

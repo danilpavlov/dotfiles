@@ -1,8 +1,5 @@
+-- Match the desktop while keeping the existing LazyVim setup.
 return {
-  "vague2k/vague.nvim",
-  config = function()
-    require("vague").setup({ transparent = true })
-    vim.cmd("colorscheme vague")
-    vim.cmd(":hi statusline guibg=NONE")
-  end,
+  { "LazyVim/LazyVim", opts = { colorscheme = "salaralo" } },
+  { "nvim-lualine/lualine.nvim", opts = { options = { theme = "salaralo" } } },
 }

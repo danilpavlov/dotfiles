@@ -156,6 +156,10 @@ Don't commit them. `~/.config/zsh/work.zsh` and `~/.config/snx-rs/vpn.conf` are
 gitignored. Their example files (`work.zsh.example`, `vpn.conf.example`) are
 committed as templates.
 
+Zsh also loads Spotify credentials from `~/.config/zsh/spotify.zsh` and ElevenLabs credentials from `~/.config/zsh/11labs.zsh` when those files exist. Both stay local.
+
+To enable `memory-stack` on a machine, set `memoryStackProjects` to a YAML list of checkout paths relative to `$HOME` in `.chezmoidata/local.yaml`. Git ignores this file so each machine can use its own work repositories.
+
 ## Wallpapers
 
 Live in their own repo: https://github.com/danilpavlov/wallpapers

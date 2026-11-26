@@ -1,0 +1,55 @@
+# Create a detached tmux dev session (RUN + CLAUDE windows) for a directory.
+# Named after the directory's basename; no-op if the session already exists.
+_dev_session() {
+  local dir="$1"
+  local session_name="$(basename "$dir")"
+
+  if tmux has-session -t "=$session_name" 2>/dev/null; then
+    return 0
+  fi
+
+  tmux new-session -d -s "$session_name" -c "$dir" -n RUN
+  tmux new-window -t "$session_name:" -c "$dir" -n CLAUDE
+  tmux select-window -t "$session_name:1"
+}
+
+# Create or reattach to a tmux session named after the current directory.
+dev() {
+  local session_name="$(basename "$PWD")"
+
+  _dev_session "$PWD"
+
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "=$session_name"
+  else
+    tmux attach-session -t "=$session_name"
+  fi
+}
+{{ if (index . "memoryStackProjects") }}
+# Directories that make up the memory stack.
+typeset -ga MEMORY_STACK_DIRS=(
+{{- range .memoryStackProjects }}
+  "$HOME/{{ . }}"
+{{- end }}
+)
+
+# Spin up a dev session (RUN + CLAUDE windows) for every repo in the memory
+# stack, then drop into the tmux session switcher to pick one.
+memory-stack() {
+  local dir
+  for dir in "${MEMORY_STACK_DIRS[@]}"; do
+    if [[ -d "$dir" ]]; then
+      _dev_session "$dir"
+    else
+      echo "memory-stack: skipping missing dir: $dir" >&2
+    fi
+  done
+
+  local first="$(basename "${MEMORY_STACK_DIRS[1]}")"
+  if [[ -n "$TMUX" ]]; then
+    tmux choose-tree -Zs
+  else
+    tmux new-session -A -s "$first" \; choose-tree -Zs
+  fi
+}
+{{- end }}

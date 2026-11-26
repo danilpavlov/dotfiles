@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Print the wallpaper hyprpaper currently has up, for ricemood's imagefile_script.
+# `listactive` prints "MONITOR: /path/to/image"; take the first monitor's.
+hyprctl hyprpaper listactive 2>/dev/null | sed -n 's/^[^:]*: //p' | head -n 1

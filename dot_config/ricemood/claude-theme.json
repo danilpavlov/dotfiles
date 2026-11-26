@@ -1,0 +1,62 @@
+{
+  "name": "ricemood",
+  "base": "dark",
+  "overrides": {
+    "text": "^r@LM>ro(28)>de(0.62)>l(87)^",
+    "inverseText": "^r@LM>ro(28)>de(0.55)>l(8)^",
+    "inactive": "^r@LM>ro(28)>de(0.4)>l(62)^",
+    "inactiveShimmer": "^r@LM>ro(28)>de(0.4)>l(76)^",
+    "subtle": "^r@LM>ro(28)>de(0.45)>l(34)^",
+
+    "claude": "^r@LM>ro(32)>sa(0.9)>l(70)^",
+    "claudeShimmer": "^r@LM>ro(32)>sa(0.9)>l(81)^",
+    "clawd_body": "^r@LM>ro(32)>sa(0.9)>l(70)^",
+    "clawd_background": "^r@LM>ro(28)>de(0.55)>l(8)^",
+    "suggestion": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+    "permission": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+    "permissionShimmer": "^r@LM>ro(74)>sa(0.4)>l(84)^",
+    "remember": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+
+    "success": "^r@V>ro(88)>de(0.2)>l(63)^",
+    "error": "^r@V>ro(-24)>sa(0.7)>l(65)^",
+    "warning": "^r@V>sa(0.55)>l(70)^",
+    "warningShimmer": "^r@V>sa(0.55)>l(82)^",
+    "merged": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+
+    "promptBorder": "^r@LM>ro(32)>sa(0.8)>l(58)^",
+    "promptBorderShimmer": "^r@LM>ro(32)>sa(0.9)>l(70)^",
+    "planMode": "^r@LM>sa(0.4)>l(71)^",
+    "autoAccept": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+    "bashBorder": "^r@V>ro(-24)>sa(0.7)>l(74)^",
+    "ide": "^r@LM>ro(32)>sa(0.8)>l(58)^",
+    "fastMode": "^r@V>ro(-12)>sa(0.7)>l(68)^",
+    "fastModeShimmer": "^r@V>ro(-12)>sa(0.7)>l(80)^",
+
+    "diffAdded": "^r@V>ro(88)>de(0.45)>l(17)^",
+    "diffRemoved": "^r@V>ro(-24)>de(0.4)>l(17)^",
+    "diffAddedDimmed": "^r@V>ro(88)>de(0.6)>l(12)^",
+    "diffRemovedDimmed": "^r@V>ro(-24)>de(0.55)>l(12)^",
+    "diffAddedWord": "^r@V>ro(88)>de(0.4)>l(28)^",
+    "diffRemovedWord": "^r@V>ro(-24)>de(0.3)>l(30)^",
+
+    "userMessageBackground": "^r@LM>ro(28)>de(0.48)>l(16)^",
+    "userMessageBackgroundHover": "^r@LM>ro(28)>de(0.4)>l(21)^",
+    "bashMessageBackgroundColor": "^r@V>ro(-24)>de(0.6)>l(15)^",
+    "memoryBackgroundColor": "^r@LM>ro(74)>de(0.45)>l(17)^",
+    "selectionBg": "^r@LM>ro(28)>de(0.32)>l(26)^",
+
+    "rate_limit_fill": "^r@LM>ro(32)>sa(0.9)>l(70)^",
+    "rate_limit_empty": "^r@LM>ro(28)>de(0.42)>l(30)^",
+    "briefLabelYou": "^r@V>sa(0.55)>l(70)^",
+    "briefLabelClaude": "^r@LM>ro(32)>sa(0.9)>l(70)^",
+
+    "red_FOR_SUBAGENTS_ONLY": "^r@V>ro(-24)>sa(0.7)>l(65)^",
+    "orange_FOR_SUBAGENTS_ONLY": "^r@V>ro(-12)>sa(0.7)>l(68)^",
+    "yellow_FOR_SUBAGENTS_ONLY": "^r@V>sa(0.55)>l(70)^",
+    "green_FOR_SUBAGENTS_ONLY": "^r@V>ro(88)>de(0.2)>l(63)^",
+    "cyan_FOR_SUBAGENTS_ONLY": "^r@LM>sa(0.4)>l(71)^",
+    "blue_FOR_SUBAGENTS_ONLY": "^r@LM>ro(32)>sa(0.8)>l(58)^",
+    "purple_FOR_SUBAGENTS_ONLY": "^r@LM>ro(74)>sa(0.4)>l(74)^",
+    "pink_FOR_SUBAGENTS_ONLY": "^r@V>ro(-48)>sa(0.45)>l(75)^"
+  }
+}

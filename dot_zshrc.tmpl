@@ -1,7 +1,7 @@
 # Path to oh-my-zsh installation
 export ZSH="$HOME/.oh-my-zsh"
 
-ZSH_THEME="murilasso"
+ZSH_THEME="salaralo"
 
 plugins=(
 	git
@@ -25,7 +25,23 @@ done
 
 # Per-machine secrets (not in git)
 [ -r ~/.config/zsh/work.zsh ] && source ~/.config/zsh/work.zsh
+[ -r ~/.config/zsh/spotify.zsh ] && source ~/.config/zsh/spotify.zsh
+[ -r ~/.config/zsh/11labs.zsh ] && source ~/.config/zsh/11labs.zsh
 
 {{ if eq .chezmoi.os "darwin" -}}
 eval "$(/opt/homebrew/bin/brew shellenv)"
 {{- end }}
+
+# uv / local bin
+export PATH="$HOME/.local/bin:$PATH"
+
+{{ if eq .chezmoi.os "linux" -}}
+# reboot into UEFI/BIOS setup
+alias bios='systemctl reboot --firmware-setup'
+
+{{ end -}}
+# Enable network access for Codex shell commands.
+alias codex='codex --sandbox workspace-write -c sandbox_workspace_write.network_access=true'
+
+# SalarAlo colors for shell tools; undo with salar-theme restore.
+source "$HOME/.config/zsh/salaralo.zsh"

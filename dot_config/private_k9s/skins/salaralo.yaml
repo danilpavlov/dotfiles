@@ -1,0 +1,137 @@
+# SalarAlo monochrome skin.
+bg: &bg "#080808"
+bg_high: &bg_high "#1a1a1a"
+bg_sel: &bg_sel "#303030"
+border: &border "#3a3a3a"
+comment: &comment "#686868"
+fg_dim: &fg_dim "#8a8a8a"
+fg: &fg "#a6a6a6"
+fg_hi: &fg_hi "#e0e0e0"
+
+sand: &sand "#c4c4c4"
+sand_hi: &sand_hi "#e0e0e0"
+terra: &terra "#b8b8b8"
+sage: &sage "#a6a6a6"
+blue: &blue "#b8b8b8"
+blue_dim: &blue_dim "#848484"
+violet: &violet "#d0d0d0"
+cyan: &cyan "#c0c0c0"
+
+transparent: &transparent "#080808"
+
+k9s:
+  body:
+    fgColor: *fg
+    bgColor: *transparent
+    logoColor: *sand
+    logoColorMsg: *fg_dim
+    logoColorInfo: *sage
+    logoColorWarn: *sand_hi
+    logoColorError: *terra
+
+  prompt:
+    fgColor: *fg
+    bgColor: *transparent
+    suggestColor: *comment
+    border:
+      default: *blue
+      command: *sand
+
+  info:
+    sectionColor: *fg_dim
+    fgColor: *fg
+    k9sRevColor: *violet
+    cpuColor: *sage
+    memColor: *cyan
+
+  help:
+    fgColor: *fg_dim
+    bgColor: *transparent
+    sectionColor: *sand
+    keyColor: *violet
+    numKeyColor: *terra
+
+  dialog:
+    fgColor: *fg
+    bgColor: *transparent
+    buttonFgColor: *fg_dim
+    buttonBgColor: *bg_high
+    buttonFocusFgColor: *bg
+    buttonFocusBgColor: *sand
+    labelFgColor: *sand
+    fieldFgColor: *fg
+
+  frame:
+    border:
+      fgColor: *border
+      focusColor: *comment
+    menu:
+      fgColor: *fg_dim
+      keyColor: *violet
+      numKeyColor: *terra
+    crumbs:
+      fgColor: *bg
+      bgColor: *blue_dim
+      activeColor: *sand
+    status:
+      newColor: *fg_dim
+      modifyColor: *blue
+      addColor: *sage
+      pendingColor: *sand
+      errorColor: *terra
+      highlightColor: *sand_hi
+      killColor: *violet
+      completedColor: *comment
+    title:
+      fgColor: *blue
+      bgColor: *transparent
+      highlightColor: *sand
+      counterColor: *terra
+      filterColor: *sage
+
+  views:
+    table:
+      fgColor: *fg
+      bgColor: *transparent
+      cursorFgColor: *bg
+      cursorBgColor: *fg_dim
+      markColor: *sand_hi
+      header:
+        fgColor: *fg
+        bgColor: *transparent
+        sorterColor: *sand
+        selectedSortColumnColor: *sand
+    xray:
+      fgColor: *fg
+      bgColor: *transparent
+      cursorColor: *bg_sel
+      cursorTextColor: *fg_hi
+      graphicColor: *comment
+    charts:
+      bgColor: *transparent
+      dialBgColor: *transparent
+      chartBgColor: *transparent
+      defaultDialColors: [*sage, *terra]
+      defaultChartColors: [*sage, *terra]
+      resourceColors:
+        cpu: [*blue, *blue_dim]
+        mem: [*sand, *sand_hi]
+      focusFgColor: *fg_hi
+      focusBgColor: *bg_sel
+    yaml:
+      keyColor: *blue
+      colonColor: *fg_dim
+      valueColor: *sage
+    picker:
+      mainColor: *fg
+      focusColor: *sand
+      shortcutColor: *violet
+    logs:
+      fgColor: *fg
+      bgColor: *transparent
+      indicator:
+        fgColor: *fg_dim
+        bgColor: *transparent
+        toggleOnColor: *sage
+        toggleOffColor: *comment
+

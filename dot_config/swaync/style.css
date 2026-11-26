@@ -1,0 +1,17 @@
+/* SalarAlo notification colors, keeping the installed SwayNC layout. */
+@import url("/etc/xdg/swaync/style.css");
+:root {
+  --cc-bg: #0f0f0f;
+  --noti-border-color: #3a3a3a;
+  --noti-bg: 15, 15, 15;
+  --noti-bg-alpha: 1;
+  --noti-bg-darker: #0b0b0b;
+  --noti-bg-hover: #1a1a1a;
+  --noti-bg-focus: #1f1f1f;
+  --text-color: #e6e6e6;
+  --text-color-disabled: #9a9a9a;
+  --bg-selected: #3a3a3a;
+  --border-radius: 0px;
+  --notification-shadow: none;
+}
+* { font-family: "JetBrainsMono Nerd Font", monospace; }
